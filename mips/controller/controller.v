@@ -1,33 +1,22 @@
 module controller(
     /*-----Decode input------*/
     input [5:0] opcode,funct,
+    input [4:0] rt,
     input equalD,
-    /*-----Execute input-----*/
-    input regwriteE,memtoregE,memwriteE,branchE,
-    /*-----Memory input-----*/
-    input regwriteM,memtoregM,branchM,zeroM,
     /*-----Decode output------*/
-    output regwriteD,memtoregD,memwriteD,branchD,alusrcD,regdstD,pcsrcD,jump,
-    output [2:0] alucontrolD,
-    /*-----Execute output------*/
-    output regwriteE1,memtoregE1,memwriteE1,branchE1,
-                           
-    /*-----Memory output-----*/
-    output regwriteM1,memtoregM1,pcsrcM
+    output memtoreg,memen,memwrite,
+    output alusrc,
+    output regdst,regwrite,hilowrite,
+    output jal,jr,bal,
+    output [1:0] pcsrc,
+    output [7:0] alucontrol
    );
+
+   wire branch,jump;
+   maindec md(opcode,funct,rt,memtoreg,memen,memwrite,branch,alusrc,regdst,
+              regwrite,hilowrite,jump,jal,jr,bal);
+   aludec  ad(op,funct,alucontrol);
+   assign pcsrc=equalD&branch;
    
-   wire [1:0] aluop;
-   
-   /*-----Decode-----*/
-   maindec md(opcode,memtoregD,memwriteD,branchD,alusrcD,regdstD,regwriteD,jump,aluop);
-   aludec ad(funct,aluop,alucontrolD);
-   assign pcsrcD=equalD&branchD;
-   
-   /*-----Execute-----*/
-   assign {regwriteE1,memtoregE1,memwriteE1,branchE1}={regwriteE,memtoregE,memwriteE,branchE};
-   
-   /*-----Memory-----*/
-   assign pcsrcM=branchM&zeroM;
-   assign {regwriteM1,memtoregM1}={regwriteM,memtoregM};
    
 endmodule
