@@ -17,11 +17,9 @@ module alu(
     wire cs,cp;//symbol bit overflow & highest bit overflow
     wire [31:0] mult_a,mult_b;
     wire [63:0] mult_res;//multiplication result
-    wire mmp;
 
     //flags
     assign zero=(aluout==0);
-    assign mmp=(alucontrol==`EXE_ADD_OP);
     assign overflow=
             ((alucontrol==`EXE_ADD_OP)||(alucontrol==`EXE_ADDI_OP))?
                 ((!srca[31]&&!srcb[31])&&aluout[31])||((srca[31]&&srcb[31])&&(!aluout[31])):
