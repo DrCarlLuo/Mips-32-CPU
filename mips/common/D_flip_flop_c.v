@@ -11,5 +11,4 @@ module D_flip_flop_c #(parameter WIDTH=8)
     always @(posedge clk,posedge reset)
         if(reset||clear)  q<=0;
         else if(enable)   q<=d; 
-        else q<=q;
 endmodule
