@@ -8,7 +8,7 @@ module alu(
 		input  [63:0] hilo,
 		output [31:0] aluout,
 		output [63:0] hilores,
-		output        oveflow,
+		output        overflow,
 		output        zero
 	);
 
@@ -21,8 +21,8 @@ module alu(
     //flags
     assign zero=(aluout==0);
     assign overflow=
-            (alucontrol==`EXE_ADD_OP||alucontrol==`EXE_ADDI_OP)?
-                ((!srca[31]&&~srcb[31])&&aluout[31])||((srca[31]&&srcb[31])&&(!aluout[31])):
+            ((alucontrol==`EXE_ADD_OP)||(alucontrol==`EXE_ADDI_OP))?
+                ((!srca[31]&&!srcb[31])&&aluout[31])||((srca[31]&&srcb[31])&&(!aluout[31])):
             (alucontrol==`EXE_SUB_OP)?
                 ((!srca[31]&&~compb[31])&&aluout[31])||((srca[31]&&compb[31])&&(!aluout[31])):0;
     
@@ -33,9 +33,9 @@ module alu(
     assign andr=srca&srcb;
     assign orr=srca|srcb;
     assign xorr=srca^srcb;
-    assign mult_a=((alucontrol==`EXE_MULT_OP)&&(a[31]==1'b1))?(~a+1):a;
-    assign mult_b=((alucontrol==`EXE_MULT_OP)&&(b[31]==1'b1))?(~b+1):b;
-    assign mult_res=((alucontrol==`EXE_MULT_OP)&&(a[31]^b[31]==1'b1))?
+    assign mult_a=((alucontrol==`EXE_MULT_OP)&&(srca[31]==1'b1))?(~srca+1):srca;
+    assign mult_b=((alucontrol==`EXE_MULT_OP)&&(srcb[31]==1'b1))?(~srcb+1):srcb;
+    assign mult_res=((alucontrol==`EXE_MULT_OP)&&(srca[31]^srcb[31]==1'b1))?
     				~(mult_a*mult_b)+1:mult_a*mult_b;
 
     //aluout value
@@ -82,8 +82,5 @@ module alu(
     				 (alucontrol==`EXE_MTHI_OP)?  {srca,hilo[31:0]}:
     				 (alucontrol==`EXE_MTLO_OP)?  {hilo[63:32],srca}:
     				 hilo;
-
-
-
 
 endmodule

@@ -1,61 +1,59 @@
 `include "defines.vh"
 module aludec(
-	input  wire [5:0] op,
-	input  wire [5:0] funct,
-	output reg  [7:0] alucontrol,
+	input  [5:0] op,
+	input  [5:0] funct,
+	output [7:0] alucontrol
 	);
 
-	always @(*) begin
-		case (op)
+	assign alucontrol=
 		/*-----I_Type-----*/
-		`EXE_ANDI  : alucontrol <= `EXE_ANDI_OP;
-		`EXE_XORI  : alucontrol <= `EXE_XORI_OP;
-		`EXE_LUI   : alucontrol <= `EXE_LUI_OP;
-		`EXE_ORI   : alucontrol <= `EXE_ORI_OP;
-		`EXE_ADDI  : alucontrol <= `EXE_ADDI_OP;
-		`EXE_ADDIU : alucontrol <= `EXE_ADDIU_OP;
-		`EXE_SLTI  : alucontrol <= `EXE_SLTI_OP;
-		`EXE_SLTIU : alucontrol <= `EXE_SLTIU_OP;
+		(op==`EXE_ANDI)?   `EXE_ANDI_OP:
+		(op==`EXE_XORI)?   `EXE_XORI_OP:
+		(op==`EXE_LUI)?    `EXE_LUI_OP:
+		(op==`EXE_ORI)?    `EXE_ORI_OP:
+		(op==`EXE_ADDI)?   `EXE_ADDI_OP:
+		(op==`EXE_ADDIU)?  `EXE_ADDIU_OP:
+		(op==`EXE_SLTI)?   `EXE_SLTI_OP:
+		(op==`EXE_SLTIU)?  `EXE_SLTIU_OP:
 		/*-----J_Type-----*/
-		
-		/*-----R_Type-----*/
-		default: case(funct)
-			//Null instruction
-			`EXE_NOP  : alucontrol <= `EXE_NOP_OP;
-			//Logic instructions
-			`EXE_AND  : alucontrol <= `EXE_AND_OP;
-			`EXE_OR   : alucontrol <= `EXE_OR_OP;
-			`EXE_XOR  : alucontrol <= `EXE_XOR_OP;
-			`EXE_NOR  : alucontrol <= `EXE_NOR_OP;
-			//Shift instructions
-			`EXE_SLL  : alucontrol <= `EXE_SLL_OP;
-			`EXE_SRL  : alucontrol <= `EXE_SRL_OP;
-			`EXE_SRA  : alucontrol <= `EXE_SRA_OP;
-			`EXE_SLLV : alucontrol <= `EXE_SLLV_OP;
-			`EXE_SRLV : alucontrol <= `EXE_SRLV_OP;
-			`EXE_SRAV : alucontrol <= `EXE_SRAV_OP;
-			//Move instructions
-			`EXE_MFHI : alucontrol <= `EXE_MFHI_OP;
-			`EXE_MFLO : alucontrol <= `EXE_MFLO_OP;
-			`EXE_MTHI : alucontrol <= `EXE_MTHI_OP;
-			`EXE_MTLO : alucontrol <= `EXE_MTLO_OP;
-			//Arithmetic instructions
-			`EXE_ADD  : alucontrol <= `EXE_ADD_OP;
-			`EXE_ADDU : alucontrol <= `EXE_ADDU_OP;
-			`EXE_SUB  : alucontrol <= `EXE_SUB_OP;
-			`EXE_SUBU : alucontrol <= `EXE_SUBU_OP;
-			`EXE_SLT  : alucontrol <= `EXE_SLT_OP;
-			`EXE_SLTU : alucontrol <= `EXE_SLTU_OP;
-			`EXE_MULT : alucontrol <= `EXE_MULT_OP;
-			`EXE_MULTU: alucontrol <= `EXE_MULTU_OP;
-			`EXE_DIV  : alucontrol <= `EXE_DIV_OP;
-			`EXE_DIVU : alucontrol <= `EXE_DIVU_OP;
-			//Branch instructions
-			`EXE_JR   : alucontrol <= `EXE_JR_OP;
-			`EXE_JALR : alucontrol <= `EXE_JALR_OP;
-			//Trap instructions
-			`EXE_BREAK: alucontrol <= `EXE_BREAK_OP;
-			`EXE_SYSCALL: alucontrol <= `EXE_SYSCALL_OP;
-			default   : alucontrol <= `FUNCT_INVALID;
 
-	end
+		/*-----R_Type-----*/
+			//Null instruction
+			(funct==`EXE_NOP)?    `EXE_NOP_OP:
+			//Logic instructions
+			(funct==`EXE_AND)?    `EXE_AND_OP:
+			(funct==`EXE_OR)?     `EXE_OR_OP:
+			(funct==`EXE_XOR)?    `EXE_XOR_OP:
+			(funct==`EXE_NOR)?    `EXE_NOR_OP:
+			//Shift instructions
+			(funct==`EXE_SLL)?    `EXE_SLL_OP:
+			(funct==`EXE_SRL)?    `EXE_SRL_OP:
+			(funct==`EXE_SRA)?    `EXE_SRA_OP:
+			(funct==`EXE_SLLV)?   `EXE_SLLV_OP:
+			(funct==`EXE_SRLV)?   `EXE_SRLV_OP:
+			(funct==`EXE_SRAV)?   `EXE_SRAV_OP:
+			//Move instructions
+			(funct==`EXE_MFHI)?   `EXE_MFHI_OP:
+			(funct==`EXE_MFLO)?   `EXE_MFLO_OP:
+			(funct==`EXE_MTHI)?   `EXE_MTHI_OP:
+			(funct==`EXE_MTLO)?   `EXE_MTLO_OP:
+			//Arithmetic instructions
+			(funct==`EXE_ADD)?    `EXE_ADD_OP:
+			(funct==`EXE_ADDU)?   `EXE_ADDU_OP:
+			(funct==`EXE_SUB)?    `EXE_SUB_OP:
+			(funct==`EXE_SUBU)?   `EXE_SUBU_OP:
+			(funct==`EXE_SLT)?    `EXE_SLT_OP:
+			(funct==`EXE_SLTU)?   `EXE_SLTU_OP:
+			(funct==`EXE_MULT)?   `EXE_MULT_OP:
+			(funct==`EXE_MULTU)?  `EXE_MULTU_OP:
+			(funct==`EXE_DIV)?    `EXE_DIV_OP:
+			(funct==`EXE_DIVU)?   `EXE_DIVU_OP:
+			//Branch instructions
+			(funct==`EXE_JR)?     `EXE_JR_OP:
+			(funct==`EXE_JALR)?   `EXE_JALR_OP:
+			//Trap instructions
+			(funct==`EXE_BREAK)?  `EXE_BREAK_OP:
+			(funct==`EXE_SYSCALL)?`EXE_SYSCALL_OP:
+			`FUNCT_INVALID;
+
+endmodule

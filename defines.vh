@@ -42,7 +42,7 @@
 //move inst
 `define EXE_SLT  		6'b101010
 `define EXE_SLTU 		6'b101011
-`define EXE_ADDU 		6'b100000
+`define EXE_ADD 		6'b100000
 `define EXE_ADDU  		6'b100001
 `define EXE_SUB  		6'b100010
 `define EXE_SUBU  		6'b100011
