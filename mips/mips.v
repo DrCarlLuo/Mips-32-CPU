@@ -15,29 +15,25 @@ module mips(
     wire flush,jump;
     assign flush=1'b0;
     
-    /*-----signal wires-----*/
-    wire memtoregD,memtoregE,memtoregM,memtoregW;
-    wire memenD;
-    wire memwriteD,memwriteE;
+    wire regwriteD,regwriteE,regwriteE1,regwriteM,regwriteM1,regwriteW;
+    wire memtoregD,memtoregE,memtoregE1,memtoregM,memtoregM1,memtoregW;
+    wire memwriteD,memwriteE,memwriteE1;
+    wire branchD,branchE,branchE1,branchM;
+    wire [2:0] alucontrolD,alucontrolE;
     wire alusrcD,alusrcE;
     wire regdstD,regdstE;
-    wire regwriteD,regwriteE,regwriteM,regwriteW;
-    wire hilowriteD,hilowriteE,hilowriteM,hilowriteW;
-    wire jalD,jrD,balD;
-    wire [1:0] pcsrcD;
-    wire [7:0] alucontrolD,alucontrolE;
-    
-    /*-----data wires-----*/
     wire zeroE,zeroM;
+    wire pcsrcD,pcsrcM;
+    
     wire [31:0] instrF,instrD;
     wire [31:0] pcplus4F,pcplus4D,pcplus4D1,pcplus4E;
     wire [31:0] srcaD,srcaE;
     wire [31:0] writedataD,writedataE,writedataE1,writedataM;
-    wire [4:0]  rsD,rsE;
-    wire [4:0]  rtD,rtE;
-    wire [4:0]  rdD,rdE;
+    wire [4:0] rsD,rsE;
+    wire [4:0] rtD,rtE;
+    wire [4:0] rdD,rdE;
     wire [31:0] signimmD,signimmE;
-    wire [4:0]  writeregE,writeregM,writeregM1,writeregW;
+    wire [4:0] writeregE,writeregM,writeregM1,writeregW;
     wire [31:0] pcbranchE,pcbranchM;
     wire [31:0] aluoutE,aluoutM,aluoutM1,aluoutW;
     wire [31:0] readdataM,readdataM1,readdataW;
@@ -47,82 +43,62 @@ module mips(
     wire forwardAD,forwardBD;
     wire stallF,stallD,flushE;
 
-    /*-----Assembly line registers-----*/
+    
     mem_FD fd(
         .clk(clk),.reset(reset),.flush(flush),.stallD(stallD),
         .instrF(instrF),
         .pcplus4F(pcplus4F),
         .instrD(instrD),
         .pcplus4D(pcplus4D)
-        );
-
+    );
+    
     mem_DE de(
         .clk(clk),.reset(reset),.flush(flushE),
-        /*-----control signals-----*/
-        //input
-        .RegWriteD(regwriteD),.MemtoRegD(memtoregD),.MemWriteD(memwriteD),
-        .ALUSrcD(alusrcD),.RegDstD(regdstD),.hilowriteD(hilowriteD),
+        .RegWriteD(regwriteD),.MemtoRegD(memtoregD),.MemWriteD(memwriteD),.BranchD(branchD),
         .ALUControlD(alucontrolD),
-        //output
-        .RegWriteE(regwriteE),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),
-        .ALUSrcE(alusrcE),.RegDstE(regdstE),.hilowriteE(hilowriteE),
-        .ALUControlE(alucontrolE),
-        /*-----data-----*/
+        .ALUSrcD(alusrcD),.RegDstD(regdstD),
         .srcaD(srcaD),.writedataD(writedataD),.signimmD(signimmD),.pcplus4D(pcplus4D1),
         .RsD(rsD),.RtD(rtD),.RdD(rdD),
+        .RegWriteE(regwriteE),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),.BranchE(branchE),
+        .ALUControlE(alucontrolE),
+        .ALUSrcE(alusrcE),.RegDstE(regdstE),
         .srcaE(srcaE),.writedataE(writedataE),
         .RsE(rsE),.RtE(rtE),.RdE(rdE),
         .signimmE(signimmE),.pcplus4E(pcplus4E)
-        );
-
+    );
+    
     mem_EM em(
         .clk(clk),.reset(reset),.flush(flush),
-        /*-----control signals-----*/
-        //input
-        .RegWriteE(regwriteE),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),.hilowriteE(hilowriteE),
-        //output
-        .RegWriteM(regwriteM),.MemtoRegM(memtoregM),.MemWriteM(memwriteM),.hilowriteM(hilowriteM),
-        /*-----data-----*/
-        //input
+        .RegWriteE(regwriteE1),.MemtoRegE(memtoregE1),.MemWriteE(memwriteE1),.BranchE(branchE1),.zeroE(zeroE),
         .aluoutE(aluoutE),.writedataE(writedataE1),.writeregE(writeregE),.pcbranchE(pcbranchE),
-        //output
+        .RegWriteM(regwriteM),.MemtoRegM(memtoregM),.MemWriteM(memwrite),.BranchM(branchM),.zeroM(zeroM),
         .aluoutM(aluoutM),.writedataM(writedataM),.writeregM(writeregM),.pcbranchM(pcbranchM)
         );
 
-    mem_MW mw(
+     mem_MW mw(
         .clk(clk),.reset(reset),.flush(flush),
         .RegWriteM(regwriteM1),.MemtoRegM(memtoregM1),
         .aluoutM(aluoutM1),.readdataM(readdataM1),.writeregM(writeregM1),
         .RegWriteW(regwriteW),.MemtoRegW(memtoregW),
         .aluoutW(aluoutW),.readdataW(readdataW),.writeregW(writeregW)
         );
-
-    mem_MW mw(
-        .clk(clk),.reset(reset),.flush(flush),
-        /*-----control signals-----*/
-        //input
-        .RegWriteM(regwriteM),.MemtoRegM(memtoregM),.hilowriteM(hilowriteM),
-        //output
-        .RegWriteW(regwriteW),.MemtoRegW(memtoregW),.hilowriteW(hilowriteW),
-        /*-----data-----*/
-        //input
-        .aluoutM(aluoutM1),.readdataM(readdataM1),.writeregM(writeregM1),
-        //output
-        .aluoutW(aluoutW),.readdataW(readdataW),.writeregW(writeregW)
-        );
     
     controller cntr(
         /*-----Decode input------*/
         .opcode(instrD[31:26]),.funct(instrD[5:0]),
-        .rt(rtD),
         .equalD(equalD),
+        /*-----Execute input-----*/
+        .regwriteE(regwriteE),.memtoregE(memtoregE),.memwriteE(memwriteE),.branchE(branchE),
+        /*-----Memory input-----*/
+        .regwriteM(regwriteM),.memtoregM(memtoregM),.branchM(branchM),.zeroM(zeroM),
         /*-----Decode output------*/
-        .memtoreg(memtoregD),.memen(memenD),.memwrite(memwriteD),
-        .alusrc(alusrcD),
-        .regdst(regdstD),.regwrite(regwriteD),.hilowrite(hilowriteD),
-        .jal(jalD),.jr(jrD),.bal(balD),
-        .pcsrc(pcsrcD),
-        .alucontrol(alucontrolD)
+        .regwriteD(regwriteD),.memtoregD(memtoregD),.memwriteD(memwriteD),
+        .branchD(branchD),.alusrcD(alusrcD),.regdstD(regdstD),.pcsrcD(pcsrcD),.jump(jump),
+        .alucontrolD(alucontrolD),
+        /*-----Execute output------*/
+        .regwriteE1(regwriteE1),.memtoregE1(memtoregE1),.memwriteE1(memwriteE1),.branchE1(branchE1),          
+        /*-----Memory output-----*/
+        .regwriteM1(regwriteM1),.memtoregM1(memtoregM1),.pcsrcM(pcsrcM)
        );
         
     datapath dp(
