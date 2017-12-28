@@ -1,10 +1,10 @@
 module mips(
-        input clk,
-        input reset,
-        input [31:0] instr,
-        input [31:0] readdata,
+        input         clk,
+        input         reset,
+        input  [31:0] instr,
+        input  [31:0] readdata,
         output [31:0] pc,
-        output memwrite,
+        output        memwrite,
         output [31:0] aluout,
         output [31:0] writedata
     );
@@ -80,7 +80,7 @@ module mips(
         .clk(clk),.reset(reset),.flush(flush),
         /*-----control signals-----*/
         //input
-        .RegWriteE(regwriteE),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),.hilowriteE(hilowriteE),
+        .RegWriteE(regwriteE&(!overflow)),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),.hilowriteE(hilowriteE),
         //output
         .RegWriteM(regwriteM),.MemtoRegM(memtoregM),.MemWriteM(memwrite),.hilowriteM(hilowriteM),
         /*-----data-----*/
@@ -91,7 +91,7 @@ module mips(
         //output
         .aluoutM(aluoutM),.writedataM(writedataM),
         .writeregM(writeregM),
-        .hiloresM(hilowriteM)
+        .hiloresM(hiloresM)
         );
 
     mem_MW mw(

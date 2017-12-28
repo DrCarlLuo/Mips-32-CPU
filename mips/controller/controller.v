@@ -1,15 +1,19 @@
 module controller(
     /*-----Decode input------*/
     input [5:0] opcode,funct,
-    input [4:0] rt,
     input equalD,
+    /*-----Execute input-----*/
+    input regwriteE,memtoregE,memwriteE,branchE,
+    /*-----Memory input-----*/
+    input regwriteM,memtoregM,branchM,zeroM,
     /*-----Decode output------*/
-    output memtoreg,memen,memwrite,
-    output alusrc,
-    output regdst,regwrite,hilowrite,
-    output jal,jr,bal,
-    output [1:0] pcsrc,
-    output [7:0] alucontrol
+    output regwriteD,memtoregD,memwriteD,branchD,alusrcD,regdstD,pcsrcD,jump,
+    output [2:0] alucontrolD,
+    /*-----Execute output------*/
+    output regwriteE1,memtoregE1,memwriteE1,branchE1,
+                           
+    /*-----Memory output-----*/
+    output regwriteM1,memtoregM1,pcsrcM
    );
 
    wire branch,jump;
@@ -17,6 +21,5 @@ module controller(
               regwrite,hilowrite,jump,jal,jr,bal);
    aludec  ad(op,funct,alucontrol);
    assign pcsrc={jump,equalD&branch};
-   
    
 endmodule
