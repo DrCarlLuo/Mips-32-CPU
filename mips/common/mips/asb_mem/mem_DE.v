@@ -34,6 +34,6 @@ module mem_DE(
                                  srcaE,
                                  writedataE,
                                  signimmE,
-                                 {rsD,rtD,rdD,saD}});
+                                 {rsE,rtE,rdE,saE}});
 
 endmodule

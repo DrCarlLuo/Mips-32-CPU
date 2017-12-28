@@ -56,6 +56,7 @@ module datapath(
     /*-----Fetch-----*/
     assign pcplus4F=pcF+32'h4;
     D_flip_flop #(32) pcreg(clk,reset,~stallF,nxtpc,pcF);
+    assign instrF1=instrF;
     mux3 #(32) pcmux(pcplus4F,pcbranchD,{pcplus4F[31:28],pcjump[25:0],2'b00},pcsrcD,nxtpc);
     
     /*-----Decode-----*/
@@ -84,7 +85,7 @@ module datapath(
     mux3 #(32) srca_mux(srcaE,resultW,aluoutM,forwardAE,srca);
     mux3 #(32) srcb_mux(writedataE,resultW,aluoutM,forwardBE,writedataE1);
     mux2 #(32) srcb_mux1(writedataE1,signimmE,alusrcE,srcbE);
-    mux2 #(32) hilo_mux(hiloW,hiloresM,forwardhiloE,hilo);
+    mux2 #(64) hilo_mux(hiloW,hiloresM,forwardhiloE,hilo);
     alu the_alu(.srca(srca),
                 .srcb(srcbE),
                 .sa(saE),

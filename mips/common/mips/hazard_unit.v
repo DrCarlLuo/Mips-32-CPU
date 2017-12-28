@@ -27,7 +27,8 @@ module hazard_unit(
     
     /*-----Assembly line stalls-----*/                   
     assign lwstall = ((rsD==rtE)||(rtD==rtE))&&memtoregE;
-    assign branchstall=(branchD&&regwriteE&&((writeregE==rsD)||(writeregE==rtD)))||(branchD&&memtoregM&&((writeregM==rsD)||(writeregM==rtD)));
+    //assign branchstall=(branchD&&regwriteE&&((writeregE==rsD)||(writeregE==rtD)))||(branchD&&memtoregM&&((writeregM==rsD)||(writeregM==rtD)));
+    assign branchstall=0;
     
     assign stallF=lwstall||branchstall;
     assign stallD=lwstall||branchstall;

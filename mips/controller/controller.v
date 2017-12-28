@@ -15,19 +15,11 @@ module controller(
     /*-----Memory output-----*/
     output regwriteM1,memtoregM1,pcsrcM
    );
-   
-   wire [1:0] aluop;
-   
-   /*-----Decode-----*/
-   maindec md(opcode,memtoregD,memwriteD,branchD,alusrcD,regdstD,regwriteD,jump,aluop);
-   aludec ad(funct,aluop,alucontrolD);
-   assign pcsrcD=equalD&branchD;
-   
-   /*-----Execute-----*/
-   assign {regwriteE1,memtoregE1,memwriteE1,branchE1}={regwriteE,memtoregE,memwriteE,branchE};
-   
-   /*-----Memory-----*/
-   assign pcsrcM=branchM&zeroM;
-   assign {regwriteM1,memtoregM1}={regwriteM,memtoregM};
+
+   wire branch,jump;
+   maindec md(opcode,funct,rt,memtoreg,memen,memwrite,branch,alusrc,regdst,
+              regwrite,hilowrite,jump,jal,jr,bal);
+   aludec  ad(op,funct,alucontrol);
+   assign pcsrc={jump,equalD&branch};
    
 endmodule
