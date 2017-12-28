@@ -50,5 +50,4 @@ module maindec(
 				(funct==`EXE_MULTU)? 12'b00000101000:
 				12'b000000000000;
 
-
 endmodule

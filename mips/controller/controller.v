@@ -16,7 +16,7 @@ module controller(
    maindec md(opcode,funct,rt,memtoreg,memen,memwrite,branch,alusrc,regdst,
               regwrite,hilowrite,jump,jal,jr,bal);
    aludec  ad(op,funct,alucontrol);
-   assign pcsrc=equalD&branch;
+   assign pcsrc={jump,equalD&branch};
    
    
 endmodule
