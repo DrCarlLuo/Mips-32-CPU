@@ -1,4 +1,3 @@
-`timescale 1ns / 1ps
 module mem_MW(
     input         clk,reset,flush,
     /*-----control signals-----*/
