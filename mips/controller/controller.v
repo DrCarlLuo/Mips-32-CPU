@@ -5,20 +5,20 @@ module controller(
     input [31:0] compa,compb,
     /*-----Decode output------*/
     output       memtoreg,memen,memwrite,
-    output       alusrc,
+    output       alusrc,branch,
     output       regdst,regwrite,hilowrite,
     output       jal,jr,bal,
     output [1:0] pcsrc,
     output [7:0] alucontrol
    );
 
-    wire branch,jump,compres;
+    wire jump,compres;
 
     maindec md(opcode,funct,rt,memtoreg,memen,memwrite,branch,alusrc,regdst,
               regwrite,hilowrite,jump,jal,jr,bal);
     aludec  ad(opcode,funct,alucontrol);
 
-    eqcmp(compa,compb,op,rt,compres);
-    assign pcsrc={jump,comp&branch};
+    eqcmp cmp(compa,compb,opcode,rt,compres);
+    assign pcsrc={jump,compres&branch};
    
 endmodule

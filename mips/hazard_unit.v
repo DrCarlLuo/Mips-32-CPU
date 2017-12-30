@@ -1,14 +1,15 @@
 module hazard_unit(
         input regwriteM,regwriteW,regwriteE,hilowriteM,
         input memtoregE,memtoregM,
-        input branchD,
+        input branchD,stall_divE,
         input [4:0] writeregE,writeregM,writeregW,
         input [4:0] rsD,rtD,
         input [4:0] rsE,rtE,
         output [1:0] forwardAE,forwardBE,
         output forwardAD,forwardBD,
         output forwardhiloE,
-        output stallF,stallD,flushE
+        output stallF,stallD,stallE,
+        output flushE
     );
     
     wire branchstall,lwstall;
@@ -27,10 +28,11 @@ module hazard_unit(
     
     /*-----Assembly line stalls-----*/                   
     assign lwstall = ((rsD==rtE)||(rtD==rtE))&&memtoregE;
-    //assign branchstall=(branchD&&regwriteE&&((writeregE==rsD)||(writeregE==rtD)))||(branchD&&memtoregM&&((writeregM==rsD)||(writeregM==rtD)));
-    assign branchstall=0;
+    assign branchstall=(branchD&&regwriteE&&((writeregE==rsD)||(writeregE==rtD)))||(branchD&&memtoregM&&((writeregM==rsD||writeregM==rtD)));
     
-    assign stallF=lwstall||branchstall;
-    assign stallD=lwstall||branchstall;
+    assign stallF=lwstall||branchstall||stall_divE;
+    assign stallD=lwstall||branchstall||stall_divE;
+    assign stallE=stall_divE;
     assign flushE=lwstall||branchstall;
+
 endmodule

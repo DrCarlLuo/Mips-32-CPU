@@ -6,8 +6,11 @@ module alu(
 		input  [4:0]  sa,
 		input  [7:0]  alucontrol,
 		input  [63:0] hilo,
+        input  [63:0] div_res,
+        input  div_readyE,div_readyM,
 		output [31:0] aluout,
 		output [63:0] hilores,
+        output        stall_div,
 		output        overflow,
 		output        zero
 	);
@@ -83,6 +86,9 @@ module alu(
     				 (alucontrol==`EXE_MULTU_OP)? mult_res:
     				 (alucontrol==`EXE_MTHI_OP)?  {srca,hilo[31:0]}:
     				 (alucontrol==`EXE_MTLO_OP)?  {hilo[63:32],srca}:
+                     (div_readyE&&!div_readyM)?   div_res:
     				 hilo;
+
+    assign stall_div=((alucontrol==`EXE_DIV_OP||alucontrol==`EXE_DIVU_OP)&&!div_readyM);
 
 endmodule

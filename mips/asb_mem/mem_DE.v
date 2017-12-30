@@ -1,5 +1,5 @@
 module mem_DE(
-    input clk,reset,flush,
+    input clk,reset,flush,stallE,
     /*-----control signals-----*/
     //input
     input         RegWriteD,MemtoRegD,MemWriteD,
@@ -22,11 +22,8 @@ module mem_DE(
     output [4:0]  rsE,rtE,rdE,saE
     );
 
-    wire stallD;
-    assign stallD=1'b0;
-
     // 6,3,8,32,32,32,32,20 => 165
-    D_flip_flop_c #(165) reg_DE(clk,reset,flush,~stallD,
+    D_flip_flop_c #(165) reg_DE(clk,reset,flush,~stallE,
                                 {{RegWriteD,MemtoRegD,MemWriteD,ALUSrcD,RegDstD,hilowriteD},
                                  {balD,jrD,jalD},
                                  ALUControlD,
