@@ -18,6 +18,7 @@ module datapath(
     /*-----Memory input----*/
     input  [31:0] aluoutM,writedataM,writeregM,readdataM,
     input  [63:0] hiloresM,
+    input         div_readyM,
     /*-----Writeback input----*/
     input         memtoregW,hilowriteW,
     input  [31:0] aluoutW,readdataW,
@@ -39,6 +40,7 @@ module datapath(
     output [31:0] aluoutE,writedataE1,
     output [63:0] hiloresE,
     output [4:0]  writeregE,
+    output        div_readyE,stall_div,
     /*-----Memory output----*/
     output [31:0] aluoutM1,readdataM1,writedataM1,
     output [63:0] hiloresM1,
@@ -55,8 +57,11 @@ module datapath(
     wire [31:0] resultW;
     wire [31:0] pcbranchD;
 
-    wire [5:0] writeregE_pre;
+    wire [5:0]  writeregE_pre;
     wire [31:0] aluoutE_pre;
+
+    wire        div_annul;
+    wire [63:0] div_resE;
     
     /*-----Fetch-----*/
     assign pcplus4F=pcF+32'h4;
@@ -96,8 +101,11 @@ module datapath(
                 .sa(saE),
                 .alucontrol(alucontrolE),
                 .hilo(hilo),
+                .div_res(div_resE),
+                .div_readyE(div_readyE),.div_readyM(div_readyM),
                 .aluout(aluoutE_pre),
                 .hilores(hiloresE),
+                .stall_div(stall_div),
                 .overflow(overflow),
                 .zero(zero)
                 );
@@ -105,6 +113,15 @@ module datapath(
     mux2 #(32) writereg_mux(rtE,rdE,regdstE,writeregE_pre);
     mux2 #(5)  alreg_mux(writeregE_pre,5'b11111,jalE|balE,writeregE);
     mux2 #(32) alres_mux(aluoutE_pre,pcplus8E,jalE|jrE|balE,aluoutE);
+
+    div div_unit(
+        .clk(clk),.rst(reset),
+        .signed_div_i(~alucontrolE[0]),
+        .opdata1_i(srca),.opdata2_i(srcbE),
+        .start_i(stall_div),.annul_i(div_annul),
+        .result_o(div_resE),.ready_o(div_readyE)
+        );
+    assign div_annul=1'b0;
      
     /*-----Memory-----*/
     assign aluoutM1=aluoutM;

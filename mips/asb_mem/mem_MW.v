@@ -16,11 +16,11 @@ module mem_MW(
     output [4:0]  writeregW
     );
 
-    wire stallM;
-    assign stallM=1'b0;
+    wire stallW;
+    assign stallW=1'b0;
 
     //3,32,32,64,5 => 136
-    D_flip_flop_c #(136) reg_MW(clk,reset,flush,~stallM,
+    D_flip_flop_c #(136) reg_MW(clk,reset,flush,~stallW,
                                 {{RegWriteM,MemtoRegM,hilowriteM},
                                  aluoutM,
                                  readdataM,
