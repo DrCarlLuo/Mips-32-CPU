@@ -79,6 +79,15 @@ module alu(
     				(alucontrol==`EXE_SLTI_OP)?
                         {{31{1'b0}},((srca[31]&&!srcb[31])||(dif[31]))&&(!(!srca[31]&&srcb[31]))}:
     				(alucontrol==`EXE_SLTIU_OP)? {{31{1'b0}},srca<srcb}:
+                    /*-----Memory Address-----*/
+                    (alucontrol==`EXE_LB_OP)?    sum:
+                    (alucontrol==`EXE_LBU_OP)?   sum:
+                    (alucontrol==`EXE_LH_OP)?    sum:
+                    (alucontrol==`EXE_LHU_OP)?   sum:
+                    (alucontrol==`EXE_LW_OP)?    sum:
+                    (alucontrol==`EXE_SB_OP)?    sum:
+                    (alucontrol==`EXE_SH_OP)?    sum:
+                    (alucontrol==`EXE_SW_OP)?    sum:
     				32'h00000000;
 
     //HILO register value

@@ -15,6 +15,15 @@ module aludec(
 		(op==`EXE_ADDIU)?  `EXE_ADDIU_OP:
 		(op==`EXE_SLTI)?   `EXE_SLTI_OP:
 		(op==`EXE_SLTIU)?  `EXE_SLTIU_OP:
+		/*-----J_Type-----*/
+		(op==`EXE_LB)?     `EXE_LB_OP:
+		(op==`EXE_LBU)?    `EXE_LBU_OP:
+		(op==`EXE_LH)?     `EXE_LH_OP:
+		(op==`EXE_LHU)?    `EXE_LHU_OP:
+		(op==`EXE_LW)?     `EXE_LW_OP:
+		(op==`EXE_SB)?     `EXE_SB_OP:
+		(op==`EXE_SH)?     `EXE_SH_OP:
+		(op==`EXE_SW)?     `EXE_SW_OP:
 		/*-----R_Type-----*/
 		(op==6'b000000)?(
 			//Null instruction

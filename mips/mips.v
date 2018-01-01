@@ -4,7 +4,8 @@ module mips(
         input  [31:0] instr,
         input  [31:0] readdata,
         output [31:0] pc,
-        output        memwrite,
+        output        memen,
+        output [3:0]  wea,
         output [31:0] aluout,
         output [31:0] writedata
     );
@@ -16,8 +17,8 @@ module mips(
     
     /*-----signal wires-----*/
     wire memtoregD,memtoregE,memtoregM,memtoregW;
-    wire memenD;
-    wire memwriteD,memwriteE;
+    wire memenD,memenE;
+    wire memwriteD,memwriteE,memwriteM;
     wire branchD;
     wire alusrcD,alusrcE;
     wire regdstD,regdstE;
@@ -27,7 +28,7 @@ module mips(
     wire jrD,jrE;
     wire balD,balE;
     wire [1:0] pcsrcD;
-    wire [7:0] alucontrolD,alucontrolE;
+    wire [7:0] alucontrolD,alucontrolE,alucontrolM;
     
     /*-----data wires-----*/
     wire [31:0] instrF,instrD;
@@ -67,12 +68,12 @@ module mips(
         .clk(clk),.reset(reset),.flush(flushE),.stallE(stallE),
         /*-----control signals-----*/
         //input
-        .RegWriteD(regwriteD),.MemtoRegD(memtoregD),.MemWriteD(memwriteD),
+        .RegWriteD(regwriteD),.MemtoRegD(memtoregD),.MemWriteD(memwriteD),.memenD(memenD),
         .ALUSrcD(alusrcD),.RegDstD(regdstD),.hilowriteD(hilowriteD),
         .balD(balD),.jrD(jrD),.jalD(jalD),
         .ALUControlD(alucontrolD),
         //output
-        .RegWriteE(regwriteE),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),
+        .RegWriteE(regwriteE),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),.memenE(memenE),
         .ALUSrcE(alusrcE),.RegDstE(regdstE),.hilowriteE(hilowriteE),
         .balE(balE),.jrE(jrE),.jalE(jalE),
         .ALUControlE(alucontrolE),
@@ -91,9 +92,11 @@ module mips(
         .clk(clk),.reset(reset),.flush(flush),
         /*-----control signals-----*/
         //input
-        .RegWriteE(regwriteE&(!overflow)),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),.hilowriteE(hilowriteE),
+        .RegWriteE(regwriteE&(!overflow)),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),.memenE(memenE),.hilowriteE(hilowriteE),
+        .ALUControlE(alucontrolE),
         //output
-        .RegWriteM(regwriteM),.MemtoRegM(memtoregM),.MemWriteM(memwrite),.hilowriteM(hilowriteM),
+        .RegWriteM(regwriteM),.MemtoRegM(memtoregM),.MemWriteM(memwriteM),.memenM(memen),.hilowriteM(hilowriteM),
+        .ALUControlM(alucontrolM),
         /*-----data-----*/
         //input
         .aluoutE(aluoutE),.writedataE(writedataE1),
@@ -157,7 +160,9 @@ module mips(
         .pcplus8E(pcplus8E),
         .rtE(rtE),.rdE(rdE),.saE(saE),
         /*-----Memory input----*/
-        .aluoutM(aluoutM),.writedataM(writedataM),.writeregM(writeregM),.readdataM(readdata),
+        .memwriteM(memwriteM),
+        .aluoutM(aluoutM),.writedataM(writedataM),.writeregM(writeregM),.readdata(readdata),
+        .alucontrolM(alucontrolM),
         .hiloresM(hiloresM),
         .div_readyM(div_readyM),
         /*-----Writeback input----*/
@@ -183,9 +188,10 @@ module mips(
         .writeregE(writeregE),
         .div_readyE(div_readyE),.stall_div(stall_divE),
         /*-----Memory output----*/
-        .aluoutM1(aluoutM1),.readdataM1(readdataM),.writedataM1(writedata),
+        .aluoutM1(aluoutM1),.readdataM(readdataM),.writedata(writedata),
         .hiloresM1(hiloresM1),
         .writeregM1(writeregM1),
+        .wea(wea),
         
         .overflow(overflow)
         );

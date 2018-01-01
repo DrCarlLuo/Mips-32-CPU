@@ -16,7 +16,9 @@ module datapath(
     input  [31:0] pcplus8E,
     input  [4:0]  rtE,rdE,saE,
     /*-----Memory input----*/
-    input  [31:0] aluoutM,writedataM,writeregM,readdataM,
+    input         memwriteM,
+    input  [31:0] aluoutM,writedataM,writeregM,readdata,
+    input  [7:0]  alucontrolM,
     input  [63:0] hiloresM,
     input         div_readyM,
     /*-----Writeback input----*/
@@ -42,9 +44,10 @@ module datapath(
     output [4:0]  writeregE,
     output        div_readyE,stall_div,
     /*-----Memory output----*/
-    output [31:0] aluoutM1,readdataM1,writedataM1,
+    output [31:0] aluoutM1,readdataM,writedata,
     output [63:0] hiloresM1,
     output [4:0]  writeregM1,
+    output [3:0]  wea,
     
     output overflow,zero
     );
@@ -126,10 +129,17 @@ module datapath(
      
     /*-----Memory-----*/
     assign aluoutM1=aluoutM;
-    assign readdataM1=readdataM;
-    assign writedataM1=writedataM;
     assign writeregM1=writeregM;
     assign hiloresM1=hiloresM;
+
+    memsel mem_unit(.alucontrolM(alucontrolM),
+                    .aluoutM(aluoutM),
+                    .writedataM(writedataM),
+                    .memwriteM(memwriteM),
+                    .readdata(readdata),
+                    .wea(wea),
+                    .readdataM(readdataM),
+                    .writedata(writedata));
     
     /*-----Writeback-----*/
     mux2 #(32) result_mux(aluoutW,readdataW,memtoregW,resultW);
