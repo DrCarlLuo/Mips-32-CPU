@@ -18,7 +18,7 @@ module mips(
     /*-----signal wires-----*/
     wire memtoregD,memtoregE,memtoregM,memtoregW;
     wire memenD,memenE;
-    wire memwriteD,memwriteE;
+    wire memwriteD,memwriteE,memwriteM;
     wire branchD;
     wire alusrcD,alusrcE;
     wire regdstD,regdstE;
@@ -68,12 +68,12 @@ module mips(
         .clk(clk),.reset(reset),.flush(flushE),.stallE(stallE),
         /*-----control signals-----*/
         //input
-        .RegWriteD(regwriteD),.MemtoRegD(memtoregD),.MemWriteD(memwriteD),memenD(memenD),
+        .RegWriteD(regwriteD),.MemtoRegD(memtoregD),.MemWriteD(memwriteD),.memenD(memenD),
         .ALUSrcD(alusrcD),.RegDstD(regdstD),.hilowriteD(hilowriteD),
         .balD(balD),.jrD(jrD),.jalD(jalD),
         .ALUControlD(alucontrolD),
         //output
-        .RegWriteE(regwriteE),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),memenE(memenE),
+        .RegWriteE(regwriteE),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),.memenE(memenE),
         .ALUSrcE(alusrcE),.RegDstE(regdstE),.hilowriteE(hilowriteE),
         .balE(balE),.jrE(jrE),.jalE(jalE),
         .ALUControlE(alucontrolE),
@@ -95,7 +95,7 @@ module mips(
         .RegWriteE(regwriteE&(!overflow)),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),.memenE(memenE),.hilowriteE(hilowriteE),
         .ALUControlE(alucontrolE),
         //output
-        .RegWriteM(regwriteM),.MemtoRegM(memtoregM),.MemWriteM(memwrite),.memenM(memen),.hilowriteM(hilowriteM),
+        .RegWriteM(regwriteM),.MemtoRegM(memtoregM),.MemWriteM(memwriteM),.memenM(memen),.hilowriteM(hilowriteM),
         .ALUControlM(alucontrolM),
         /*-----data-----*/
         //input
@@ -160,6 +160,7 @@ module mips(
         .pcplus8E(pcplus8E),
         .rtE(rtE),.rdE(rdE),.saE(saE),
         /*-----Memory input----*/
+        .memwriteM(memwriteM),
         .aluoutM(aluoutM),.writedataM(writedataM),.writeregM(writeregM),.readdata(readdata),
         .alucontrolM(alucontrolM),
         .hiloresM(hiloresM),
@@ -187,7 +188,7 @@ module mips(
         .writeregE(writeregE),
         .div_readyE(div_readyE),.stall_div(stall_divE),
         /*-----Memory output----*/
-        .aluoutM1(aluoutM1),.readdataM(readdataM),.writedataM1(writedata),
+        .aluoutM1(aluoutM1),.readdataM(readdataM),.writedata(writedata),
         .hiloresM1(hiloresM1),
         .writeregM1(writeregM1),
         .wea(wea),

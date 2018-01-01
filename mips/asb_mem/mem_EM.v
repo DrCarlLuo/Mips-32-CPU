@@ -23,15 +23,17 @@ module mem_EM(
     wire stallM;
     assign stallM=1'b0;
 
-    //5,32,32,5,64,1 => 139
-    D_flip_flop_c #(139) reg_EM(clk,reset,flush,~stallM,
+    //5,8,32,32,5,64,1 => 147
+    D_flip_flop_c #(147) reg_EM(clk,reset,flush,~stallM,
                                 {{RegWriteE,MemtoRegE,MemWriteE,memenE,hilowriteE},
+                                 ALUControlE,
                                  aluoutE,
                                  writedataE,
                                  writeregE,
                                  hiloresE,
                                  div_readyE},
                                 {{RegWriteM,MemtoRegM,MemWriteM,memenM,hilowriteM},
+                                 ALUControlM,
                                  aluoutM,
                                  writedataM,
                                  writeregM,
