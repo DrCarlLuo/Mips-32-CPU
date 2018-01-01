@@ -2,12 +2,12 @@ module mem_DE(
     input clk,reset,flush,stallE,
     /*-----control signals-----*/
     //input
-    input         RegWriteD,MemtoRegD,MemWriteD,
+    input         RegWriteD,MemtoRegD,MemWriteD,memenD,
     input         ALUSrcD,RegDstD,hilowriteD,
     input         balD,jrD,jalD,
     input  [7:0]  ALUControlD,
     //output
-    output        RegWriteE,MemtoRegE,MemWriteE,
+    output        RegWriteE,MemtoRegE,MemWriteE,memenE,
     output        ALUSrcE,RegDstE,hilowriteE,
     output        balE,jrE,jalE,
     output [7:0]  ALUControlE,
@@ -22,9 +22,9 @@ module mem_DE(
     output [4:0]  rsE,rtE,rdE,saE
     );
 
-    // 6,3,8,32,32,32,32,20 => 165
-    D_flip_flop_c #(165) reg_DE(clk,reset,flush,~stallE,
-                                {{RegWriteD,MemtoRegD,MemWriteD,ALUSrcD,RegDstD,hilowriteD},
+    // 7,3,8,32,32,32,32,20 => 166
+    D_flip_flop_c #(166) reg_DE(clk,reset,flush,~stallE,
+                                {{RegWriteD,MemtoRegD,MemWriteD,memenD,ALUSrcD,RegDstD,hilowriteD},
                                  {balD,jrD,jalD},
                                  ALUControlD,
                                  srcaD,
@@ -32,7 +32,7 @@ module mem_DE(
                                  signimmD,
                                  pcplus8D,
                                  {rsD,rtD,rdD,saD}},
-                                {{RegWriteE,MemtoRegE,MemWriteE,ALUSrcE,RegDstE,hilowriteE},
+                                {{RegWriteE,MemtoRegE,MemWriteE,memenE,ALUSrcE,RegDstE,hilowriteE},
                                  {balE,jrE,jalE},
                                  ALUControlE,
                                  srcaE,

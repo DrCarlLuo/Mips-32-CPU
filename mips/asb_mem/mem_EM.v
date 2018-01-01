@@ -2,9 +2,11 @@ module mem_EM(
     input clk,reset,flush,
     /*-----control signals-----*/
     //input
-    input         RegWriteE,MemtoRegE,MemWriteE,hilowriteE,
+    input         RegWriteE,MemtoRegE,MemWriteE,memenE,hilowriteE,
+    input  [7:0]  ALUControlE,
     //output
-    output        RegWriteM,MemtoRegM,MemWriteM,hilowriteM,
+    output        RegWriteM,MemtoRegM,MemWriteM,memenM,hilowriteM,
+    output [7:0]  ALUControlM,
     /*-----data-----*/
     //input
     input  [31:0] aluoutE,writedataE,
@@ -21,15 +23,15 @@ module mem_EM(
     wire stallM;
     assign stallM=1'b0;
 
-    //4,32,32,5,64,1 => 138
-    D_flip_flop_c #(138) reg_EM(clk,reset,flush,~stallM,
-                                {{RegWriteE,MemtoRegE,MemWriteE,hilowriteE},
+    //5,32,32,5,64,1 => 139
+    D_flip_flop_c #(139) reg_EM(clk,reset,flush,~stallM,
+                                {{RegWriteE,MemtoRegE,MemWriteE,memenE,hilowriteE},
                                  aluoutE,
                                  writedataE,
                                  writeregE,
                                  hiloresE,
                                  div_readyE},
-                                {{RegWriteM,MemtoRegM,MemWriteM,hilowriteM},
+                                {{RegWriteM,MemtoRegM,MemWriteM,memenM,hilowriteM},
                                  aluoutM,
                                  writedataM,
                                  writeregM,
