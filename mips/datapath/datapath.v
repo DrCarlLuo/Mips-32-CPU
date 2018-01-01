@@ -50,7 +50,7 @@ module datapath(
     );
     
     wire [31:0] nxtpc;
-    wire [25:0] pcjump;
+    wire [31:0] pcjump;
     wire [31:0] srca;
     wire [31:0] srcbE;
     wire [63:0] hilo,hiloW;
@@ -67,7 +67,7 @@ module datapath(
     assign pcplus4F=pcF+32'h4;
     D_flip_flop #(32) pcreg(clk,reset,~stallF,nxtpc,pcF);
     assign instrF1=instrF;
-    mux3 #(32) pcmux(pcplus4F,pcbranchD,{pcplus4F[31:28],pcjump[25:0],2'b00},pcsrcD,nxtpc);
+    mux3 #(32) pcmux(pcplus4F,pcbranchD,pcjump,pcsrcD,nxtpc);
     
     /*-----Decode-----*/
     regfile rf(.clk(clk),
@@ -85,8 +85,9 @@ module datapath(
 
     signext sig_ext(instrD[15:0],instrD[29:28],signimmD);
     assign pcbranchD=pcplus4D+{signimmD[29:0],2'b00};
-    assign pcjump=instrD[25:0];
     assign pcplus8D=pcplus4D+32'h4;
+
+    mux2 #(32) jump_mux({pcplus4D[31:28],instrD[25:0],2'b00},srcaD,(pcsrcD[1]&&(instrD[31:26]==6'b000000)),pcjump);
      
     mux2 #(32) eqmuxa(srcaD,aluoutM,forwardAD,compa);
     mux2 #(32) eqmuxb(writedataD,aluoutM,forwardBD,compb);

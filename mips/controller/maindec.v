@@ -22,8 +22,6 @@ module maindec(
             /*-----J_Type-----*/
             (op==`EXE_J)?     12'b000000001000:
             (op==`EXE_JAL)?   12'b000000101100:
-            (op==`EXE_JALR)?  12'b000001101010:
-            (op==`EXE_JR)?    12'b000000001000:
             (op==`EXE_BEQ)?   12'b000100000000:
             (op==`EXE_BGTZ)?  12'b000100000000:
             (op==`EXE_BLEZ)?  12'b000100000000:
@@ -63,6 +61,9 @@ module maindec(
                 (funct==`EXE_SLTU)?  12'b000001100000:
                 (funct==`EXE_MULT)?  12'b000001010000:
                 (funct==`EXE_MULTU)? 12'b000001010000:
+                //jr instructions
+                (funct==`EXE_JALR)?  12'b000001101010:
+                (funct==`EXE_JR)?    12'b000000001000:
 				12'b000000000000;
 
 endmodule
