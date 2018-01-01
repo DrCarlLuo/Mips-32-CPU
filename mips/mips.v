@@ -18,17 +18,21 @@ module mips(
     wire memtoregD,memtoregE,memtoregM,memtoregW;
     wire memenD;
     wire memwriteD,memwriteE;
+    wire branchD;
     wire alusrcD,alusrcE;
     wire regdstD,regdstE;
     wire regwriteD,regwriteE,regwriteM,regwriteW;
     wire hilowriteD,hilowriteE,hilowriteM,hilowriteW;
-    wire jalD,jrD,balD;
+    wire jalD,jalE;
+    wire jrD,jrE;
+    wire balD,balE;
     wire [1:0] pcsrcD;
     wire [7:0] alucontrolD,alucontrolE;
     
     /*-----data wires-----*/
     wire [31:0] instrF,instrD;
     wire [31:0] pcplus4F,pcplus4D;
+    wire [31:0] pcplus8D,pcplus8E;
     wire [31:0] srcaD,srcaE;
     wire [31:0] writedataD,writedataE,writedataE1,writedataM;
     wire [4:0]  rsD,rsE;
@@ -40,12 +44,15 @@ module mips(
     wire [31:0] aluoutE,aluoutM,aluoutM1,aluoutW;
     wire [31:0] readdataM,readdataW;
     wire [63:0] hiloresE,hiloresM,hiloresM1,hiloresW;
-    wire equalD;
+    wire [31:0] compa,compb;
+    wire        div_readyE,div_readyM;
+    wire        stall_divE;
     
     wire [1:0] forwardAE,forwardBE;
     wire forwardAD,forwardBD;
     wire forwardhiloE;
-    wire stallF,stallD,flushE;
+    wire stallF,stallD,stallE;
+    wire flushE;
 
     /*-----Assembly line registers-----*/
     mem_FD fd(
@@ -57,22 +64,26 @@ module mips(
         );
 
     mem_DE de(
-        .clk(clk),.reset(reset),.flush(flushE),
+        .clk(clk),.reset(reset),.flush(flushE),.stallE(stallE),
         /*-----control signals-----*/
         //input
         .RegWriteD(regwriteD),.MemtoRegD(memtoregD),.MemWriteD(memwriteD),
         .ALUSrcD(alusrcD),.RegDstD(regdstD),.hilowriteD(hilowriteD),
+        .balD(balD),.jrD(jrD),.jalD(jalD),
         .ALUControlD(alucontrolD),
         //output
         .RegWriteE(regwriteE),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),
         .ALUSrcE(alusrcE),.RegDstE(regdstE),.hilowriteE(hilowriteE),
+        .balE(balE),.jrE(jrE),.jalE(jalE),
         .ALUControlE(alucontrolE),
         /*-----data-----*/
         //input
         .srcaD(srcaD),.writedataD(writedataD),.signimmD(signimmD),
+        .pcplus8D(pcplus8D),
         .rsD(rsD),.rtD(rtD),.rdD(rdD),.saD(saD),
         //output
         .srcaE(srcaE),.writedataE(writedataE),.signimmE(signimmE),
+        .pcplus8E(pcplus8E),
         .rsE(rsE),.rtE(rtE),.rdE(rdE),.saE(saE)
         );
 
@@ -88,10 +99,12 @@ module mips(
         .aluoutE(aluoutE),.writedataE(writedataE1),
         .writeregE(writeregE),
         .hiloresE(hiloresE),
+        .div_readyE(div_readyE&&!div_readyM),
         //output
         .aluoutM(aluoutM),.writedataM(writedataM),
         .writeregM(writeregM),
-        .hiloresM(hiloresM)
+        .hiloresM(hiloresM),
+        .div_readyM(div_readyM)
         );
 
     mem_MW mw(
@@ -117,10 +130,10 @@ module mips(
         /*-----Decode input------*/
         .opcode(instrD[31:26]),.funct(instrD[5:0]),
         .rt(rtD),
-        .equalD(equalD),
+        .compa(compa),.compb(compb),
         /*-----Decode output------*/
         .memtoreg(memtoregD),.memen(memenD),.memwrite(memwriteD),
-        .alusrc(alusrcD),
+        .alusrc(alusrcD),.branch(branchD),
         .regdst(regdstD),.regwrite(regwriteD),.hilowrite(hilowriteD),
         .jal(jalD),.jr(jrD),.bal(balD),
         .pcsrc(pcsrcD),
@@ -139,11 +152,14 @@ module mips(
         /*-----Execute input----*/
         .alucontrolE(alucontrolE),
         .alusrcE(alusrcE),.regdstE(regdstE),
+        .balE(balE),.jrE(jrE),.jalE(jalE),
         .srcaE(srcaE),.writedataE(writedataE),.signimmE(signimmE),
+        .pcplus8E(pcplus8E),
         .rtE(rtE),.rdE(rdE),.saE(saE),
         /*-----Memory input----*/
         .aluoutM(aluoutM),.writedataM(writedataM),.writeregM(writeregM),.readdataM(readdata),
         .hiloresM(hiloresM),
+        .div_readyM(div_readyM),
         /*-----Writeback input----*/
         .memtoregW(memtoregW),.hilowriteW(hilowriteW),
         .aluoutW(aluoutW),.readdataW(readdataW),
@@ -159,11 +175,13 @@ module mips(
         .srcaD(srcaD),.writedataD(writedataD),
         .rsD(rsD),.rtD(rtD),.rdD(rdD),.saD(saD),
         .signimmD(signimmD),
-        .equalD(equalD),
+        .pcplus8D(pcplus8D),
+        .compa(compa),.compb(compb),
         /*-----Execute output----*/
         .aluoutE(aluoutE),.writedataE1(writedataE1),
         .hiloresE(hiloresE),
         .writeregE(writeregE),
+        .div_readyE(div_readyE),.stall_div(stall_divE),
         /*-----Memory output----*/
         .aluoutM1(aluoutM1),.readdataM1(readdataM),.writedataM1(writedata),
         .hiloresM1(hiloresM1),
@@ -177,14 +195,15 @@ module mips(
   hazard_unit hzu(
         .regwriteM(regwriteM),.regwriteW(regwriteW),.regwriteE(regwriteE),.hilowriteM(hilowriteM),
         .memtoregE(memtoregE),.memtoregM(memtoregM),
-        //.branchD(branchD),
+        .branchD(branchD),.stall_divE(stall_divE),
         .writeregE(writeregE),.writeregM(writeregM),.writeregW(writeregW),
         .rsD(rsD),.rtD(rtD),
         .rsE(rsE),.rtE(rtE),
         .forwardAE(forwardAE),.forwardBE(forwardBE),
         .forwardAD(forwardAD),.forwardBD(forwardBD),
         .forwardhiloE(forwardhiloE),
-        .stallD(stallD),.stallF(stallF),.flushE(flushE)
+        .stallD(stallD),.stallF(stallF),.stallE(stallE),
+        .flushE(flushE)
         );
     
 endmodule

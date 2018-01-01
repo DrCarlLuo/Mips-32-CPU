@@ -4,7 +4,7 @@ module mem_FD(
     input  [31:0] pcplus4F,
     output [31:0] instrD,
     output [31:0] pcplus4D
-);
+    );
     
     //32,32 => 64
     D_flip_flop_c #(64) reg_FD(clk,reset,flush,~stallD,
