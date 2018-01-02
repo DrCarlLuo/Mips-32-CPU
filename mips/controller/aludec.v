@@ -1,9 +1,13 @@
 `include "defines.vh"
 module aludec(
-	input  [5:0] op,
-	input  [5:0] funct,
-	output [7:0] alucontrol
+	input  [31:0] instrD,
+	output [7:0]  alucontrol
 	);
+
+	wire [5:0] op,funct;
+
+    assign op=instrD[31:26];
+    assign funct=instrD[5:0];
 
 	assign alucontrol=
 		/*-----I_Type-----*/
@@ -24,6 +28,11 @@ module aludec(
 		(op==`EXE_SB)?     `EXE_SB_OP:
 		(op==`EXE_SH)?     `EXE_SH_OP:
 		(op==`EXE_SW)?     `EXE_SW_OP:
+        /*-----privileged instruction-----*/
+        (op==6'b010000)?(
+            (instrD[25:21]==5'b00100)? `EXE_MTC0_OP://mtc0
+            (instrD[25:21]==5'b00000)? `EXE_MFC0_OP://mfc0
+                                       `NO_ALU):
 		/*-----R_Type-----*/
 		(op==6'b000000)?(
 			//Null instruction

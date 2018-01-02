@@ -3,11 +3,12 @@ module memsel(
 	input  [7:0]  alucontrolM,
 	input  [31:0] aluoutM,
 	input  [31:0] writedataM,
-	input		  memwriteM,
+	input		  memwriteM,memtoregM,
 	input  [31:0] readdata,
 	output [3:0]  wea,
 	output [31:0] readdataM,
-	output [31:0] writedata
+	output [31:0] writedata,
+    output        adelM,adesM
 	);
 
 	wire [7:0] readbyte;
@@ -47,5 +48,13 @@ module memsel(
                      (alucontrolM==`EXE_LHU_OP)?   {16'h0000,readhword}:
                      (alucontrolM==`EXE_LW_OP)?    readdata:
                      32'h00000000;
+
+    /*-----exception-----*/
+    assign adesM=memwriteM&
+                ((alucontrolM==`EXE_SH_OP&&aluoutM[0])||(alucontrolM==`EXE_SW_OP&&(aluoutM[1:0]!=2'b00)));
+
+    assign adelM=memtoregM&(
+                 (((alucontrolM==`EXE_LH_OP)||(alucontrolM==`EXE_LHU_OP))&&aluoutM[0])||
+                 ((alucontrolM==`EXE_LW_OP)&&(aluoutM[1:0]!=2'b00)));
 
 endmodule

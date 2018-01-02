@@ -76,6 +76,8 @@
 `define EXE_REGIMM_INST 6'b000001
 `define EXE_SPECIAL2_INST 6'b011100
 
+`define EXE_ERET 32'b01000010000000000000000000011000
+
 
 /*-----ALU CONTROL-----*/
 `define EXE_AND_OP   	8'b00100100
@@ -170,3 +172,13 @@
 
 `define EXE_NOP_OP    	8'b00000000
 `define NO_ALU		    8'b11111111
+
+// //CP0
+`define CP0_REG_BADVADDR    5'b01000       //只读
+`define CP0_REG_COUNT    5'b01001        //可读写
+`define CP0_REG_COMPARE    5'b01011      //可读写
+`define CP0_REG_STATUS    5'b01100       //可读写
+`define CP0_REG_CAUSE    5'b01101        //只读
+`define CP0_REG_EPC    5'b01110          //可读写
+`define CP0_REG_PRID    5'b01111         //只读
+`define CP0_REG_CONFIG    5'b10000       //只读

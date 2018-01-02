@@ -1,78 +1,97 @@
 `include "defines.vh"
 module maindec(
-	input  wire [5:0] 	op,
-	input  wire [5:0] 	funct,
-	input  wire [4:0] 	rt,
-	output wire 		memtoreg,memen,memwrite,
-	output wire 		branch,alusrc,
-	output wire 		regdst,regwrite,hilowrite,
-	output wire 		jump,jal,jr,bal 
+    input  [31:0] instrD,
+	output 		  memtoreg,memen,memwrite,
+	output 		  branch,alusrc,
+	output 		  regdst,regwrite,hilowrite,cp0write,
+	output 		  jump,jal,jr,bal,
+	output        syscallD,breakD,eretD,invalidD
 	);
 
-	assign {memtoreg,memen,memwrite,branch,alusrc,regdst,regwrite,hilowrite,jump,jal,jr,bal}=
-			/*-----I_Type-----*/
-            (op==`EXE_ADDI)?  12'b000010100000:
-            (op==`EXE_XORI)?  12'b000010100000:
-            (op==`EXE_LUI)?   12'b000010100000:
-            (op==`EXE_ORI)?   12'b000010100000:
-            (op==`EXE_ADDI)?  12'b000010100000:
-            (op==`EXE_ADDIU)? 12'b000010100000:
-            (op==`EXE_SLTI)?  12'b000010100000:
-            (op==`EXE_SLTIU)? 12'b000010100000:
+    wire [5:0] op,rt,funct;
+
+    assign op=instrD[31:26];
+    assign rt=instrD[20:16];
+    assign funct=instrD[5:0];
+    
+    assign syscallD=((op==6'b000000)&&(funct==`EXE_SYSCALL));
+    assign breakD=((op==6'b000000)&&(funct==`EXE_BREAK));
+    assign eretD=(instrD==`EXE_ERET);
+    assign invalidD=1'b0;
+
+    assign {memtoreg,memen,memwrite,branch,alusrc,regdst,regwrite,hilowrite,jump,jal,jr,bal,cp0write,invalidD}=
+            /*-----I_Type-----*/
+            (op==`EXE_ADDI)?  14'b00001010000000:
+            (op==`EXE_XORI)?  14'b00001010000000:
+            (op==`EXE_LUI)?   14'b00001010000000:
+            (op==`EXE_ORI)?   14'b00001010000000:
+            (op==`EXE_ADDI)?  14'b00001010000000:
+            (op==`EXE_ADDIU)? 14'b00001010000000:
+            (op==`EXE_SLTI)?  14'b00001010000000:
+            (op==`EXE_SLTIU)? 14'b00001010000000:
             /*-----J_Type-----*/
-            (op==`EXE_J)?     12'b000000001000:
-            (op==`EXE_JAL)?   12'b000000101100:
-            (op==`EXE_BEQ)?   12'b000100000000:
-            (op==`EXE_BGTZ)?  12'b000100000000:
-            (op==`EXE_BLEZ)?  12'b000100000000:
-            (op==`EXE_BNE)?   12'b000100000000:
+            (op==`EXE_J)?     14'b00000000100000:
+            (op==`EXE_JAL)?   14'b00000010110000:
+            (op==`EXE_BEQ)?   14'b00010000000000:
+            (op==`EXE_BGTZ)?  14'b00010000000000:
+            (op==`EXE_BLEZ)?  14'b00010000000000:
+            (op==`EXE_BNE)?   14'b00010000000000:
             (op==`EXE_REGIMM_INST)?(
-                (rt==`EXE_BLTZ)?  12'b000100000000:
-                (rt==`EXE_BLTZAL)?12'b000100100001:
-                (rt==`EXE_BGEZ)?  12'b000100000000:
-                (rt==`EXE_BGEZAL)?12'b000100100001:
-                12'b000000000000):
+                (rt==`EXE_BLTZ)?    14'b00010000000000:
+                (rt==`EXE_BLTZAL)?  14'b00010010000100:
+                (rt==`EXE_BGEZ)?    14'b00010000000000:
+                (rt==`EXE_BGEZAL)?  14'b00010010000100:
+                                    14'b00000000000001):
             
-            (op==`EXE_LB)?    12'b110010100000:
-            (op==`EXE_LBU)?   12'b110010100000:
-            (op==`EXE_LH)?    12'b110010100000:
-            (op==`EXE_LHU)?   12'b110010100000:
-            (op==`EXE_LW)?    12'b110010100000:
-            (op==`EXE_SB)?    12'b011010000000:
-            (op==`EXE_SH)?    12'b011010000000:
-            (op==`EXE_SW)?    12'b011010000000:
-			/*-----R_Type-----*/
-				//Null instruction
-				//(funct==`EXE_NOP)?   12'b000000000000:
-				//Logic instructions
-                (funct==`EXE_AND)?   12'b000001100000:
-                (funct==`EXE_OR)?    12'b000001100000:
-                (funct==`EXE_XOR)?   12'b000001100000:
-                (funct==`EXE_NOR)?   12'b000001100000:
-				//Shift instructions
-                (funct==`EXE_SLL)?   12'b000001100000:
-                (funct==`EXE_SRL)?   12'b000001100000:
-                (funct==`EXE_SRA)?   12'b000001100000:
-                (funct==`EXE_SLLV)?  12'b000001100000:
-                (funct==`EXE_SRLV)?  12'b000001100000:
-                (funct==`EXE_SRAV)?  12'b000001100000:
-				//Move instructions
-                (funct==`EXE_MFHI)?  12'b000001100000:
-                (funct==`EXE_MFLO)?  12'b000001100000:
-                (funct==`EXE_MTHI)?  12'b000001010000:
-                (funct==`EXE_MTLO)?  12'b000001010000:
-				//Arithmetic instructions
-                (funct==`EXE_ADD)?   12'b000001100000:
-                (funct==`EXE_ADDU)?  12'b000001100000:
-                (funct==`EXE_SUB)?   12'b000001100000:
-                (funct==`EXE_SUBU)?  12'b000001100000:
-                (funct==`EXE_SLT)?   12'b000001100000:
-                (funct==`EXE_SLTU)?  12'b000001100000:
-                (funct==`EXE_MULT)?  12'b000001010000:
-                (funct==`EXE_MULTU)? 12'b000001010000:
+            (op==`EXE_LB)?    14'b11001010000000:
+            (op==`EXE_LBU)?   14'b11001010000000:
+            (op==`EXE_LH)?    14'b11001010000000:
+            (op==`EXE_LHU)?   14'b11001010000000:
+            (op==`EXE_LW)?    14'b11001010000000:
+            (op==`EXE_SB)?    14'b01101000000000:
+            (op==`EXE_SH)?    14'b01101000000000:
+            (op==`EXE_SW)?    14'b01101000000000:
+            /*-----privileged instruction-----*/
+            (op==6'b010000)?(
+                (instrD[250:21]==5'b00100)? 14'b00000000000010://mtc0
+                (instrD[250:21]==5'b00000)? 14'b00000010000000://mfc0
+                (instrD==`EXE_ERET)?        14'b00000000000000:
+                                            14'b00000000000001):
+            /*-----R_Type-----*/
+                //Null instruction
+                //(funct==`EXE_NOP)?   14'b00000000000000:
+                //Logic instructions
+                (funct==`EXE_AND)?   14'b00000110000000:
+                (funct==`EXE_OR)?    14'b00000110000000:
+                (funct==`EXE_XOR)?   14'b00000110000000:
+                (funct==`EXE_NOR)?   14'b00000110000000:
+                //Shift instructions
+                (funct==`EXE_SLL)?   14'b00000110000000:
+                (funct==`EXE_SRL)?   14'b00000110000000:
+                (funct==`EXE_SRA)?   14'b00000110000000:
+                (funct==`EXE_SLLV)?  14'b00000110000000:
+                (funct==`EXE_SRLV)?  14'b00000110000000:
+                (funct==`EXE_SRAV)?  14'b00000110000000:
+                //Move instructions
+                (funct==`EXE_MFHI)?  14'b00000110000000:
+                (funct==`EXE_MFLO)?  14'b00000110000000:
+                (funct==`EXE_MTHI)?  14'b00000101000000:
+                (funct==`EXE_MTLO)?  14'b00000101000000:
+                //Arithmetic instructions
+                (funct==`EXE_ADD)?   14'b00000110000000:
+                (funct==`EXE_ADDU)?  14'b00000110000000:
+                (funct==`EXE_SUB)?   14'b00000110000000:
+                (funct==`EXE_SUBU)?  14'b00000110000000:
+                (funct==`EXE_SLT)?   14'b00000110000000:
+                (funct==`EXE_SLTU)?  14'b00000110000000:
+                (funct==`EXE_MULT)?  14'b00000101000000:
+                (funct==`EXE_MULTU)? 14'b00000101000000:
                 //jr instructions
-                (funct==`EXE_JALR)?  12'b000001101010:
-                (funct==`EXE_JR)?    12'b000000001000:
-				12'b000000000000;
+                (funct==`EXE_JALR)?  14'b00000110101000:
+                (funct==`EXE_JR)?    14'b00000000100000:
+                //trap instructions
+                (funct==`EXE_SYSCALL)?14'b00000000000000:
+                (funct==`EXE_BREAK)? 14'b00000000000000:
+                14'b0000000000001;
 
 endmodule

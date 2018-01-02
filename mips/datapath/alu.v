@@ -7,9 +7,11 @@ module alu(
 		input  [7:0]  alucontrol,
 		input  [63:0] hilo,
         input  [63:0] div_res,
-        input  div_readyE,div_readyM,
+        input         div_readyE,div_readyM,
+        input  [31:0] cp0data,
 		output [31:0] aluout,
 		output [63:0] hilores,
+        output [31:0] cp0res,
         output        stall_div,
 		output        overflow,
 		output        zero
@@ -66,6 +68,8 @@ module alu(
     				/*-----MF-----*/
     				(alucontrol==`EXE_MFHI_OP)?	 hilo[63:32]:
     				(alucontrol==`EXE_MFLO_OP)?	 hilo[31:0]:
+                    /*-----CP0-----*/
+                    (alucontrol==`EXE_MFC0_OP)?  cp0data:
     				/*-----Arithmetic-----*/
     				(alucontrol==`EXE_ADD_OP)?	 sum:
     				(alucontrol==`EXE_ADDU_OP)?  sum:
@@ -97,6 +101,9 @@ module alu(
     				 (alucontrol==`EXE_MTLO_OP)?  {hilo[63:32],srca}:
                      (div_readyE&&!div_readyM)?   div_res:
     				 hilo;
+
+    //CP0
+    assign cp0res=(alucontrol==`EXE_MTC0_OP)?  srcb:32'h00000000;
 
     assign stall_div=((alucontrol==`EXE_DIV_OP||alucontrol==`EXE_DIVU_OP)&&!div_readyM);
 
