@@ -16,6 +16,6 @@ module exception(
 					(eret)?		32'h0000000e:
 					(invalid)?  32'h0000000a:
 					(overflow)? 32'h0000000c:
-								32'h00000001;
+								32'h00000000;
 
 endmodule

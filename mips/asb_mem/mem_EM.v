@@ -14,6 +14,7 @@ module mem_EM(
     input  [4:0]  writecp0E,
     input  [63:0] hiloresE,
     input  [31:0] cp0resE,
+    input  [31:0] pcplus8E,
     input         div_readyE,
     //output
     output [31:0] aluoutM,writedataM,
@@ -21,20 +22,21 @@ module mem_EM(
     output [4:0]  writecp0M,
     output [63:0] hiloresM,
     output [31:0] cp0resM,
+    output [31:0] pcplus8M,
     input         div_readyM,
     /*-----exception info-----*/
     //input
-    input         adelE,syscallE,breakE,eretE,invalidE,overflowE,
+    input         adelE,syscallE,breakE,eretE,invalidE,overflowE,in_delayE,
     //output
-    output        adelM,syscallM,breakM,eretM,invalidM,overflowM
+    output        adelM,syscallM,breakM,eretM,invalidM,overflowM,in_delayM
     );
 
     wire stallM;
     wire tmp;
     assign stallM=1'b0;
 
-    //6,8,32,32,5,5,64,1,32,6 => 191
-    D_flip_flop_c #(191) reg_EM(clk,reset,flush,~stallM,
+    //6,8,32,32,5,5,64,1,32,32,7 => 224
+    D_flip_flop_c #(224) reg_EM(clk,reset,flush,~stallM,
                                 {{RegWriteE,MemtoRegE,MemWriteE,memenE,hilowriteE,cp0writeE},
                                  ALUControlE,
                                  aluoutE,
@@ -44,7 +46,8 @@ module mem_EM(
                                  hiloresE,
                                  div_readyE,
                                  cp0resE,
-                                 {adelE,syscallE,breakE,eretE,invalidE,overflowE}},
+                                 pcplus8E,
+                                 {adelE,syscallE,breakE,eretE,invalidE,overflowE,in_delayE}},
                                 {{RegWriteM,MemtoRegM,MemWriteM,memenM,hilowriteM,cp0writeM},
                                  ALUControlM,
                                  aluoutM,
@@ -54,7 +57,8 @@ module mem_EM(
                                  hiloresM,
                                  div_readyM,
                                  cp0resM,
-                                 {adelM,syscallM,breakM,eretM,invalidM,overflowM}});
+                                 pcplus8M,
+                                 {adelM,syscallM,breakM,eretM,invalidM,overflowM,in_delayM}});
                                  
 
 endmodule

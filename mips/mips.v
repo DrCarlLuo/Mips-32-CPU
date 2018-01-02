@@ -3,6 +3,7 @@ module mips(
         input         reset,
         input  [31:0] instr,
         input  [31:0] readdata,
+        input  [5:0]  int_i,
         output [31:0] pc,
         output        memen,
         output [3:0]  wea,
@@ -19,7 +20,7 @@ module mips(
     wire memtoregD,memtoregE,memtoregM,memtoregW;
     wire memenD,memenE;
     wire memwriteD,memwriteE,memwriteM;
-    wire branchD;
+    wire branchD,jumpD;
     wire alusrcD,alusrcE;
     wire regdstD,regdstE;
     wire regwriteD,regwriteE,regwriteM,regwriteW;
@@ -34,7 +35,7 @@ module mips(
     /*-----data wires-----*/
     wire [31:0] instrF,instrD;
     wire [31:0] pcplus4F,pcplus4D;
-    wire [31:0] pcplus8D,pcplus8E;
+    wire [31:0] pcplus8D,pcplus8E,pcplus8E1,pcplus8M;
     wire [31:0] srcaD,srcaE;
     wire [31:0] writedataD,writedataE,writedataE1,writedataM;
     wire [4:0]  rsD,rsE;
@@ -53,12 +54,14 @@ module mips(
     wire        stall_divE;
     wire [31:0] cp0dataD,cp0dataE;
     
+    /*-----hazard wires-----*/
     wire [1:0] forwardAE,forwardBE;
     wire forwardAD,forwardBD;
     wire forwardhiloE;
     wire [1:0] forwardcp0E;
     wire stallF,stallD,stallE;
-    wire flushE;
+    wire flushF,flushD,flushE,flushM,flushW;
+    wire [31:0] newpcF,epcM;
 
     /*-----exception wires-----*/
     wire adelF,adelD,adelE,adelM;
@@ -67,17 +70,19 @@ module mips(
     wire eretD,eretE,eretM;
     wire invalidD,invalidE,invalidM;
     wire overflowE,overflowM;
+    wire in_delayF,in_delayD,in_delayE,in_delayM;
+    wire [31:0] excepttype;
 
     /*-----Assembly line registers-----*/
     mem_FD fd(
-        .clk(clk),.reset(reset),.flush(flush),.stallD(stallD),
+        .clk(clk),.reset(reset),.flush(flushD),.stallD(stallD),
         .instrF(instrF),
         .pcplus4F(pcplus4F),
         .instrD(instrD),
         .pcplus4D(pcplus4D),
         /*-----exception info-----*/
-        .adelF(adelF),
-        .adelD(adelD)
+        .adelF(adelF),.in_delayF(in_delayF),
+        .adelD(adelD),.in_delayD(in_delayD)
         );
 
     mem_DE de(
@@ -106,13 +111,15 @@ module mips(
         .cp0dataE(cp0dataE),
         /*-----exception info-----*/
         //input
-        .adelD(adelD),.syscallD(syscallD),.breakD(breakD),.eretD(eretD),.invalidD(invalidD),
+        .adelD(adelD),.syscallD(syscallD),.breakD(breakD),
+        .eretD(eretD),.invalidD(invalidD),.in_delayD(in_delayD),
         //output
-        .adelE(adelE),.syscallE(syscallE),.breakE(breakE),.eretE(eretE),.invalidE(invalidE)
+        .adelE(adelE),.syscallE(syscallE),.breakE(breakE),
+        .eretE(eretE),.invalidE(invalidE),.in_delayE(in_delayE)
         );
 
     mem_EM em(
-        .clk(clk),.reset(reset),.flush(flush),
+        .clk(clk),.reset(reset),.flush(flushM),
         /*-----control signals-----*/
         //input
         .RegWriteE(regwriteE&(!overflowE)),.MemtoRegE(memtoregE),.MemWriteE(memwriteE),
@@ -129,6 +136,7 @@ module mips(
         .writecp0E(writecp0E),
         .hiloresE(hiloresE),
         .cp0resE(cp0resE),
+        .pcplus8E(pcplus8E1),
         .div_readyE(div_readyE&&!div_readyM),
         //output
         .aluoutM(aluoutM),.writedataM(writedataM),
@@ -136,18 +144,19 @@ module mips(
         .writecp0M(writecp0M),
         .hiloresM(hiloresM),
         .cp0resM(cp0resM),
+        .pcplus8M(pcplus8M),
         .div_readyM(div_readyM),
         /*-----exception info-----*/
         //input
         .adelE(adelE),.syscallE(syscallE),.breakE(breakE),
-        .eretE(eretE),.invalidE(invalidE),.overflowE(overflowE),
+        .eretE(eretE),.invalidE(invalidE),.overflowE(overflowE),.in_delayE(in_delayE),
         //output
         .adelM(adelM),.syscallM(syscallM),.breakM(breakM),
-        .eretM(eretM),.invalidM(invalidM),.overflowM(overflowM)
+        .eretM(eretM),.invalidM(invalidM),.overflowM(overflowM),.in_delayM(in_delayM)
         );
 
     mem_MW mw(
-        .clk(clk),.reset(reset),.flush(flush),
+        .clk(clk),.reset(reset),.flush(flushW),
         /*-----control signals-----*/
         //input
         .RegWriteM(regwriteM),.MemtoRegM(memtoregM),.hilowriteM(hilowriteM),.cp0writeM(cp0writeM),
@@ -175,7 +184,7 @@ module mips(
         .compa(compa),.compb(compb),
         /*-----Decode output------*/
         .memtoreg(memtoregD),.memen(memenD),.memwrite(memwriteD),
-        .alusrc(alusrcD),.branch(branchD),
+        .alusrc(alusrcD),.branch(branchD),.jump(jumpD),
         .regdst(regdstD),.regwrite(regwriteD),.hilowrite(hilowriteD),.cp0write(cp0writeD),
         .jal(jalD),.jr(jrD),.bal(balD),
         .syscallD(syscallD),.breakD(breakD),.eretD(eretD),.invalidD(invalidD),
@@ -187,7 +196,7 @@ module mips(
     datapath dp(
         .clk(clk),.reset(reset),
         /*-----Fetch input----*/
-        .pcsrcD(pcsrcD),.instrF(instr),
+        .pcsrcD(pcsrcD),.instrF(instr),.newpcF(newpcF),
         /*-----Decode input----*/
         .instrD(instrD),.pcplus4D(pcplus4D),
         .regwriteW(regwriteW),.cp0writeW(cp0writeW),
@@ -208,8 +217,11 @@ module mips(
         .alucontrolM(alucontrolM),
         .hiloresM(hiloresM),
         .cp0resM(cp0resM),
+        .pcplus8M(pcplus8M),
         .div_readyM(div_readyM),
-        .adelM(adelM),.syscallM(syscallM),.breakM(breakM),.eretM(eretM),.invalidM(invalidM),.overflowM(overflowM),
+        .adelM(adelM),.syscallM(syscallM),.breakM(breakM),.eretM(eretM),
+        .invalidM(invalidM),.overflowM(overflowM),.in_delayM(in_delayM),
+        .int_i(int_i),
         /*-----Writeback input----*/
         .memtoregW(memtoregW),.hilowriteW(hilowriteW),
         .aluoutW(aluoutW),.readdataW(readdataW),
@@ -219,10 +231,10 @@ module mips(
         .forwardAE(forwardAE),.forwardBE(forwardBE),
         .forwardAD(forwardAD),.forwardBD(forwardBD),
         .forwardhiloE(forwardhiloE),.forwardcp0E(forwardcp0E),
-        .stallF(stallF),
+        .stallF(stallF),.flushF(flushF),
         /*-----Fetch output----*/
         .pcF(pc),.pcplus4F(pcplus4F),.instrF1(instrF),
-        .adelD(adelD),
+        .adelF(adelF),.in_delayF(in_delayF),
         /*-----Decode output----*/
         .srcaD(srcaD),.writedataD(writedataD),
         .rsD(rsD),.rtD(rtD),.rdD(rdD),.saD(saD),
@@ -236,6 +248,7 @@ module mips(
         .cp0resE(cp0resE),
         .writeregE(writeregE),
         .writecp0E(writecp0E),
+        .pcplus8E1(pcplus8E1),
         .div_readyE(div_readyE),.stall_div(stall_divE), 
         .overflowE(overflowE),
         /*-----Memory output----*/
@@ -244,7 +257,8 @@ module mips(
         .cp0resM1(cp0resM1),
         .writeregM1(writeregM1),
         .writecp0M1(writecp0M1),
-        .wea(wea)
+        .wea(wea),
+        .excepttype(excepttype),.epcM(epcM)
         );
   assign aluout=aluoutM1;
   
@@ -253,17 +267,19 @@ module mips(
         .regwriteM(regwriteM),.regwriteW(regwriteW),.regwriteE(regwriteE),.hilowriteM(hilowriteM),
         .cp0writeM(cp0writeM),.cp0writeW(cp0writeW),
         .memtoregE(memtoregE),.memtoregM(memtoregM),
-        .branchD(branchD),.stall_divE(stall_divE),
+        .branchD(branchD),.jumpD(jumpD),.stall_divE(stall_divE),
         .writeregE(writeregE),.writeregM(writeregM),.writeregW(writeregW),
         .writecp0M(writecp0M),.writecp0W(writecp0W),
         .rsD(rsD),.rtD(rtD),
         .rsE(rsE),.rtE(rtE),.rdE(rdE),
+        .excepttype(excepttype),.epcM(epcM),
         .forwardAE(forwardAE),.forwardBE(forwardBE),
         .forwardAD(forwardAD),.forwardBD(forwardBD),
         .forwardhiloE(forwardhiloE),
         .forwardcp0E(forwardcp0E),
         .stallD(stallD),.stallF(stallF),.stallE(stallE),
-        .flushE(flushE)
+        .flushF(flushF),.flushD(flushD),.flushE(flushE),.flushM(flushM),.flushW(flushW),
+        .newpcF(newpcF)
         );
     
 endmodule

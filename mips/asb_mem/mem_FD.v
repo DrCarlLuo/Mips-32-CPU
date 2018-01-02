@@ -5,13 +5,13 @@ module mem_FD(
     output [31:0] instrD,
     output [31:0] pcplus4D,
     /*-----exception info-----*/
-    input  adelF,
-    output adelD
+    input  adelF,in_delayF,
+    output adelD,in_delayD
     );
     
-    //32,32,1 => 65
-    D_flip_flop_c #(65) reg_FD(clk,reset,flush,~stallD,
-                              {instrF,pcplus4F,adelF},
-                              {instrD,pcplus4D,adelD});
+    //32,32,1,1 => 66
+    D_flip_flop_c #(66) reg_FD(clk,reset,flush,~stallD,
+                              {instrF,pcplus4F,adelF,in_delayF},
+                              {instrD,pcplus4D,adelD,in_delayD});
 
 endmodule

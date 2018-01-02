@@ -4,7 +4,7 @@ module controller(
     input [31:0] compa,compb,
     /*-----Decode output------*/
     output       memtoreg,memen,memwrite,
-    output       alusrc,branch,
+    output       alusrc,branch,jump,
     output       regdst,regwrite,hilowrite,cp0write,
     output       jal,jr,bal,
     output       syscallD,breakD,eretD,invalidD,
@@ -12,7 +12,7 @@ module controller(
     output [7:0] alucontrol
    );
 
-    wire jump,compres;
+    wire compres;
 
     maindec md(instrD,memtoreg,memen,memwrite,branch,alusrc,regdst,
               regwrite,hilowrite,cp0write,jump,jal,jr,bal,syscallD,breakD,eretD,invalidD);

@@ -3,7 +3,7 @@ module datapath(
     input         reset,
     /*-----Fetch input----*/
     input  [1:0]  pcsrcD,
-    input  [31:0] instrF,
+    input  [31:0] instrF,newpcF,
     /*-----Decode input----*/
     input  [31:0] instrD,pcplus4D,
     input         regwriteW,cp0writeW,
@@ -24,8 +24,10 @@ module datapath(
     input  [7:0]  alucontrolM,
     input  [63:0] hiloresM,
     input  [31:0] cp0resM,
+    input  [31:0] pcplus8M,
     input         div_readyM,
-    input         adelM,syscallM,breakM,eretM,invalidM,overflowM,
+    input         adelM,syscallM,breakM,eretM,invalidM,overflowM,in_delayM,
+    input  [5:0]  int_i,
     /*-----Writeback input----*/
     input         memtoregW,hilowriteW,
     input  [31:0] aluoutW,readdataW,
@@ -36,10 +38,10 @@ module datapath(
     input         forwardAD,forwardBD,
     input         forwardhiloE,
     input  [1:0]  forwardcp0E,
-    input         stallF,
+    input         stallF,flushF,
     /*-----Fetch output----*/
     output [31:0] pcF,pcplus4F,instrF1,
-    output        adelD,
+    output        adelF,in_delayF,
     /*-----Decode output----*/
     output [31:0] srcaD,writedataD,
     output [4:0]  rsD,rtD,rdD,saD,
@@ -53,6 +55,7 @@ module datapath(
     output [31:0] cp0resE,
     output [4:0]  writeregE,
     output [4:0]  writecp0E,
+    output [31:0] pcplus8E1,
     output        div_readyE,stall_div,
     output        overflowE,
     /*-----Memory output----*/
@@ -61,10 +64,11 @@ module datapath(
     output [31:0] cp0resM1,
     output [4:0]  writeregM1,
     output [4:0]  writecp0M1,
-    output [3:0]  wea
+    output [3:0]  wea,
+    output [31:0] excepttype,epcM
     );
     
-    wire [31:0] nxtpc;
+    wire [31:0] nxtpc,nxtpc1;
     wire [31:0] pcjump;
     wire [31:0] srca;
     wire [31:0] srcbE;
@@ -80,16 +84,19 @@ module datapath(
     wire [63:0] div_resE;
 
     wire        adelM1,adesM;
+    wire [31:0] cp0_status,cp0_cause;
 
     wire zero;//no use
     
     /*-----Fetch-----*/
     assign pcplus4F=pcF+32'h4;
-    D_flip_flop #(32) pcreg(clk,reset,~stallF,nxtpc,pcF);
+    D_flip_flop #(32) pcreg(clk,reset,~stallF,nxtpc1,pcF);
     assign instrF1=instrF;
     mux3 #(32) pcmux(pcplus4F,pcbranchD,pcjump,pcsrcD,nxtpc);
+    mux2 #(32) except_pcmux(nxtpc,newpcF,flushF,nxtpc1);
 
-    assign adelD=(pcF[1:0]==2'b00);//adel exception
+    assign adelF=(pcF[1:0]!=2'b00);//adel exception
+    assign in_delayF=(pcsrcD[0]||pcsrcD[1]);//whether in delay slot
     
     /*-----Decode-----*/
     regfile rf(.clk(clk),
@@ -109,7 +116,7 @@ module datapath(
     assign pcbranchD=pcplus4D+{signimmD[29:0],2'b00};
     assign pcplus8D=pcplus4D+32'h4;
 
-    mux2 #(32) jump_mux({pcplus4D[31:28],instrD[25:0],2'b00},srcaD,(pcsrcD[1]&&(instrD[31:26]==6'b000000)),pcjump);
+    mux2 #(32) jump_mux({pcplus4D[31:28],instrD[25:0],2'b00},compa,(pcsrcD[1]&&(instrD[31:26]==6'b000000)),pcjump);
      
     mux2 #(32) eqmuxa(srcaD,aluoutM,forwardAD,compa);
     mux2 #(32) eqmuxb(writedataD,aluoutM,forwardBD,compb);
@@ -120,17 +127,16 @@ module datapath(
         .waddr_i(writecp0W),.raddr_i(rdD),
         .data_i(cp0resW),
 
-        //input wire[5:0] int_i,
+        .int_i(int_i),
 
-        //input wire[31:0] excepttype_i,
-        //input wire[31:0] current_inst_addr_i,
-        //input wire is_in_delayslot_i,
-        //input wire[31:0] bad_addr_i,
+        .excepttype_i(excepttype),
+        .current_inst_addr_i(pcplus8M-8),
+        .is_in_delayslot_i(in_delayM),
+        .bad_addr_i(aluoutM),
 
-        .data_o(cp0dataD)
-        //.status_o(),
-        //output reg[31:0] cause_o,
-        //output reg[31:0] epc_o,
+        .data_o(cp0dataD),.status_o(cp0_status),
+        .cause_o(cp0_cause),
+        .epc_o(epcM)
         
         //output reg[31:0] badvaddr,
         //output reg timer_int_o
@@ -163,6 +169,8 @@ module datapath(
     mux2 #(5)  alreg_mux(writeregE_pre,5'b11111,jalE|balE,writeregE);
     mux2 #(32) alres_mux(aluoutE_pre,pcplus8E,jalE|jrE|balE,aluoutE);
 
+    assign pcplus8E1=pcplus8E;
+
     assign writecp0E=rdE;
 
     div div_unit(
@@ -194,9 +202,9 @@ module datapath(
     //exception unit
     exception exp_unit(.rst(reset),
                        .adel(adelM|adelM1),.ades(adesM),.syscall(syscallM),.break(breakM),
-                       .eret(eretM),.invalid(invalidM),.overflow(overflowM)
-                       //.cp0_status(),cp0_cause(),
-                       //.excepttype()
+                       .eret(eretM),.invalid(invalidM),.overflow(overflowM),
+                       .cp0_status(cp0_status),.cp0_cause(cp0_cause),
+                       .excepttype(excepttype)
                        );
     
     /*-----Writeback-----*/
