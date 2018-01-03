@@ -14,7 +14,7 @@ module memsel(
 	wire [7:0] readbyte;
 	wire [15:0] readhword;
 
-	assign wea={4{memwriteM}}&(   
+	assign wea=   
                      (alucontrolM==`EXE_SB_OP)?(
                      	(aluoutM[1:0]==2'b00)? 4'b0001:
                      	(aluoutM[1:0]==2'b01)? 4'b0010:
@@ -22,8 +22,13 @@ module memsel(
                      	(aluoutM[1:0]==2'b11)? 4'b1000:
                      	4'b0000):
                      (alucontrolM==`EXE_SH_OP)?((aluoutM[1])?4'b1100:4'b0011):
-                     (alucontrolM==`EXE_SW_OP)?    4'b1111:
-                     4'b0000);
+                     (alucontrolM==`EXE_SW_OP)?4'b1111:
+                     (alucontrolM==`EXE_LW_OP)?4'b1111:     
+                     (alucontrolM==`EXE_LB_OP)?4'b1111:
+                     (alucontrolM==`EXE_LBU_OP)?4'b1111:
+                     (alucontrolM==`EXE_LH_OP)?4'b1111:
+                     (alucontrolM==`EXE_LHU_OP)?4'b1111:
+                     4'b0000;
 
 	assign writedata=(alucontrolM==`EXE_SB_OP)?(
                      	(aluoutM[1:0]==2'b00)? {24'h000000,writedataM[7:0]}:

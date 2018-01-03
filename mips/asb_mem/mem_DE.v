@@ -25,12 +25,14 @@ module mem_DE(
     /*-----exception info-----*/
     //input
     input         adelD,syscallD,breakD,eretD,invalidD,in_delayD,
+    input  [31:0] bad_addrD,
     //output
-    output        adelE,syscallE,breakE,eretE,invalidE,in_delayE
+    output        adelE,syscallE,breakE,eretE,invalidE,in_delayE,
+    output [31:0] bad_addrE
     );
 
-    // 8,3,8,32,32,32,32,32,20,6 => 205
-    D_flip_flop_c #(205) reg_DE(clk,reset,flush,~stallE,
+    // 8,3,8,32,32,32,32,32,20,6,32 => 237
+    D_flip_flop_c #(237) reg_DE(clk,reset,flush,~stallE,
                                 {{RegWriteD,MemtoRegD,MemWriteD,memenD,ALUSrcD,RegDstD,hilowriteD,cp0writeD},
                                  {balD,jrD,jalD},
                                  ALUControlD,
@@ -40,7 +42,8 @@ module mem_DE(
                                  pcplus8D,
                                  cp0dataD,
                                  {rsD,rtD,rdD,saD},
-                                 {adelD,syscallD,breakD,eretD,invalidD,in_delayD}},
+                                 {adelD,syscallD,breakD,eretD,invalidD,in_delayD},
+                                 bad_addrD},
                                 {{RegWriteE,MemtoRegE,MemWriteE,memenE,ALUSrcE,RegDstE,hilowriteE,cp0writeE},
                                  {balE,jrE,jalE},
                                  ALUControlE,
@@ -50,6 +53,7 @@ module mem_DE(
                                  pcplus8E,
                                  cp0dataE,
                                  {rsE,rtE,rdE,saE},
-                                 {adelE,syscallE,breakE,eretE,invalidE,in_delayE}});
+                                 {adelE,syscallE,breakE,eretE,invalidE,in_delayE},
+                                 bad_addrE});
 
 endmodule

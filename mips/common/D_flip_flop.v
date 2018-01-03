@@ -8,6 +8,6 @@ module D_flip_flop #(parameter WIDTH=8)
     );
     
     always @(posedge clk,posedge reset)
-        if(reset)  q<=0;
+        if(reset)  q<=32'hbfc00000;
         else if(enable)       q<=d; 
 endmodule

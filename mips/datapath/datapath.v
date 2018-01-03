@@ -28,6 +28,7 @@ module datapath(
     input         div_readyM,
     input         adelM,syscallM,breakM,eretM,invalidM,overflowM,in_delayM,
     input  [5:0]  int_i,
+    input  [31:0] bad_addrM,
     /*-----Writeback input----*/
     input         memtoregW,hilowriteW,
     input  [31:0] aluoutW,readdataW,
@@ -41,7 +42,8 @@ module datapath(
     input         stallF,flushF,
     /*-----Fetch output----*/
     output [31:0] pcF,pcplus4F,instrF1,
-    output        adelF,in_delayF,
+    output        adelF,
+    output [31:0] bad_addrF,
     /*-----Decode output----*/
     output [31:0] srcaD,writedataD,
     output [4:0]  rsD,rtD,rdD,saD,
@@ -65,7 +67,8 @@ module datapath(
     output [4:0]  writeregM1,
     output [4:0]  writecp0M1,
     output [3:0]  wea,
-    output [31:0] excepttype,epcM
+    output [31:0] excepttype,epcM,
+    output        adesM,adel_final
     );
     
     wire [31:0] nxtpc,nxtpc1;
@@ -83,8 +86,10 @@ module datapath(
     wire        div_annul;
     wire [63:0] div_resE;
 
-    wire        adelM1,adesM;
+    wire        adelM1;
     wire [31:0] cp0_status,cp0_cause;
+    wire [3:0]  wea1;
+    wire [31:0] bad_addr;
 
     wire zero;//no use
     
@@ -96,7 +101,7 @@ module datapath(
     mux2 #(32) except_pcmux(nxtpc,newpcF,flushF,nxtpc1);
 
     assign adelF=(pcF[1:0]!=2'b00);//adel exception
-    assign in_delayF=(pcsrcD[0]||pcsrcD[1]);//whether in delay slot
+    assign bad_addrF=(adelF)?pcF:32'h0;
     
     /*-----Decode-----*/
     regfile rf(.clk(clk),
@@ -121,6 +126,8 @@ module datapath(
     mux2 #(32) eqmuxa(srcaD,aluoutM,forwardAD,compa);
     mux2 #(32) eqmuxb(writedataD,aluoutM,forwardBD,compb);
 
+    mux2 #(32) bad_addr_mux(aluoutM,bad_addrM,adelM,bad_addr);
+
     cp0_reg cp0(
         .clk(clk),.rst(reset),
         .we_i(cp0writeW),
@@ -132,7 +139,7 @@ module datapath(
         .excepttype_i(excepttype),
         .current_inst_addr_i(pcplus8M-8),
         .is_in_delayslot_i(in_delayM),
-        .bad_addr_i(aluoutM),
+        .bad_addr_i(bad_addr),
 
         .data_o(cp0dataD),.status_o(cp0_status),
         .cause_o(cp0_cause),
@@ -172,6 +179,7 @@ module datapath(
     assign pcplus8E1=pcplus8E;
 
     assign writecp0E=rdE;
+   
 
     div div_unit(
         .clk(clk),.rst(reset),
@@ -188,20 +196,23 @@ module datapath(
     assign writecp0M1=writecp0M;
     assign hiloresM1=hiloresM;
     assign cp0resM1=cp0resM;
+    
+    assign wea=wea1&{4{excepttype==32'h0}};
+    assign adel_final=adelM|adelM1;
 
     memsel mem_unit(.alucontrolM(alucontrolM),
                     .aluoutM(aluoutM),
                     .writedataM(writedataM),
                     .memwriteM(memwriteM),.memtoregM(memtoregM),
                     .readdata(readdata),
-                    .wea(wea),
+                    .wea(wea1),
                     .readdataM(readdataM),
                     .writedata(writedata),
                     .adelM(adelM1),.adesM(adesM));
 
     //exception unit
     exception exp_unit(.rst(reset),
-                       .adel(adelM|adelM1),.ades(adesM),.syscall(syscallM),.break(breakM),
+                       .adel(adel_final),.ades(adesM),.syscall(syscallM),.break(breakM),
                        .eret(eretM),.invalid(invalidM),.overflow(overflowM),
                        .cp0_status(cp0_status),.cp0_cause(cp0_cause),
                        .excepttype(excepttype)
@@ -211,7 +222,7 @@ module datapath(
     mux2 #(32) result_mux(aluoutW,readdataW,memtoregW,resultW);
     hilo_reg the_hilo(
         .clk(clk),.rst(reset),.wea(hilowriteW),
-        .hi(hiloresE[63:32]),.lo(hiloresE[31:0]),
+        .hi(hiloresW[63:32]),.lo(hiloresW[31:0]),
         .hi_r(hiloW[63:32]),.lo_r(hiloW[31:0]) 
         );
 

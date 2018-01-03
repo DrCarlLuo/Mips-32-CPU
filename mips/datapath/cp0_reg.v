@@ -75,12 +75,14 @@ module cp0_reg(
 						timer_int_o <= 1'b0;
 					end
 					`CP0_REG_STATUS:begin 
-						status_o <= data_i;
+						//status_o <= data_i;
+						status_o[15:8]<=data_i[15:8];
+						status_o[1:0]<=data_i[1:0];
 					end
 					`CP0_REG_CAUSE:begin 
 						cause_o[9:8] <= data_i[9:8];
-						cause_o[23] <= data_i[23];
-						cause_o[22] <= data_i[22];
+						//cause_o[23] <= data_i[23];
+						//cause_o[22] <= data_i[22];
 					end
 					`CP0_REG_EPC:begin 
 						epc_o <= data_i;

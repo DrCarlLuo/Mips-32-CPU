@@ -4,7 +4,7 @@ module hilo_reg(
 	output reg  [31:0] hi_r,lo_r 
 	);
 
-	always @(negedge clk or rst) begin
+	always @(negedge clk or posedge rst) begin
 		if(rst) begin
 			hi_r<=0;
 			lo_r<=0;

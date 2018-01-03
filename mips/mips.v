@@ -1,6 +1,7 @@
 module mips(
         input         clk,
         input         reset,
+        input         stall_by_iram,
         input  [31:0] instr,
         input  [31:0] readdata,
         input  [5:0]  int_i,
@@ -8,7 +9,8 @@ module mips(
         output        memen,
         output [3:0]  wea,
         output [31:0] aluout,
-        output [31:0] writedata
+        output [31:0] writedata,
+        output        memwriteM,adelM,adesM
     );
     
     wire zero,overflow;
@@ -18,8 +20,8 @@ module mips(
     
     /*-----signal wires-----*/
     wire memtoregD,memtoregE,memtoregM,memtoregW;
-    wire memenD,memenE;
-    wire memwriteD,memwriteE,memwriteM;
+    wire memenD,memenE,memenM;
+    wire memwriteD,memwriteE,memwriteM1;
     wire branchD,jumpD;
     wire alusrcD,alusrcE;
     wire regdstD,regdstE;
@@ -64,7 +66,7 @@ module mips(
     wire [31:0] newpcF,epcM;
 
     /*-----exception wires-----*/
-    wire adelF,adelD,adelE,adelM;
+    wire adelF,adelD,adelE,adelM1;
     wire syscallD,syscallE,syscallM;
     wire breakD,breakE,breakM;
     wire eretD,eretE,eretM;
@@ -72,6 +74,11 @@ module mips(
     wire overflowE,overflowM;
     wire in_delayF,in_delayD,in_delayE,in_delayM;
     wire [31:0] excepttype;
+    wire [31:0] bad_addrF,bad_addrD,bad_addrE,bad_addrM;
+    
+    assign memen=memenM&(excepttype==32'h0);
+    assign memwriteM=memwriteM1&(excepttype==32'h0);
+    assign in_delayF=jumpD|branchD;
 
     /*-----Assembly line registers-----*/
     mem_FD fd(
@@ -82,7 +89,9 @@ module mips(
         .pcplus4D(pcplus4D),
         /*-----exception info-----*/
         .adelF(adelF),.in_delayF(in_delayF),
-        .adelD(adelD),.in_delayD(in_delayD)
+        .bad_addrF(bad_addrF),
+        .adelD(adelD),.in_delayD(in_delayD),
+        .bad_addrD(bad_addrD)
         );
 
     mem_DE de(
@@ -113,9 +122,11 @@ module mips(
         //input
         .adelD(adelD),.syscallD(syscallD),.breakD(breakD),
         .eretD(eretD),.invalidD(invalidD),.in_delayD(in_delayD),
+        .bad_addrD(bad_addrD),
         //output
         .adelE(adelE),.syscallE(syscallE),.breakE(breakE),
-        .eretE(eretE),.invalidE(invalidE),.in_delayE(in_delayE)
+        .eretE(eretE),.invalidE(invalidE),.in_delayE(in_delayE),
+        .bad_addrE(bad_addrE)
         );
 
     mem_EM em(
@@ -126,8 +137,8 @@ module mips(
         .memenE(memenE),.hilowriteE(hilowriteE),.cp0writeE(cp0writeE),
         .ALUControlE(alucontrolE),
         //output
-        .RegWriteM(regwriteM),.MemtoRegM(memtoregM),.MemWriteM(memwriteM),
-        .memenM(memen),.hilowriteM(hilowriteM),.cp0writeM(cp0writeM),
+        .RegWriteM(regwriteM),.MemtoRegM(memtoregM),.MemWriteM(memwriteM1),
+        .memenM(memenM),.hilowriteM(hilowriteM),.cp0writeM(cp0writeM),
         .ALUControlM(alucontrolM),
         /*-----data-----*/
         //input
@@ -150,9 +161,11 @@ module mips(
         //input
         .adelE(adelE),.syscallE(syscallE),.breakE(breakE),
         .eretE(eretE),.invalidE(invalidE),.overflowE(overflowE),.in_delayE(in_delayE),
+        .bad_addrE(bad_addrE),
         //output
-        .adelM(adelM),.syscallM(syscallM),.breakM(breakM),
-        .eretM(eretM),.invalidM(invalidM),.overflowM(overflowM),.in_delayM(in_delayM)
+        .adelM(adelM1),.syscallM(syscallM),.breakM(breakM),
+        .eretM(eretM),.invalidM(invalidM),.overflowM(overflowM),.in_delayM(in_delayM),
+        .bad_addrM(bad_addrM)
         );
 
     mem_MW mw(
@@ -211,7 +224,7 @@ module mips(
         .cp0dataE(cp0dataE),
         .rtE(rtE),.rdE(rdE),.saE(saE),
         /*-----Memory input----*/
-        .memwriteM(memwriteM),.memtoregM(memtoregM),
+        .memwriteM(memwriteM1),.memtoregM(memtoregM),
         .aluoutM(aluoutM),.writedataM(writedataM),.readdata(readdata),
         .writeregM(writeregM),.writecp0M(writecp0M),
         .alucontrolM(alucontrolM),
@@ -219,9 +232,10 @@ module mips(
         .cp0resM(cp0resM),
         .pcplus8M(pcplus8M),
         .div_readyM(div_readyM),
-        .adelM(adelM),.syscallM(syscallM),.breakM(breakM),.eretM(eretM),
+        .adelM(adelM1),.syscallM(syscallM),.breakM(breakM),.eretM(eretM),
         .invalidM(invalidM),.overflowM(overflowM),.in_delayM(in_delayM),
         .int_i(int_i),
+        .bad_addrM(bad_addrM),
         /*-----Writeback input----*/
         .memtoregW(memtoregW),.hilowriteW(hilowriteW),
         .aluoutW(aluoutW),.readdataW(readdataW),
@@ -234,7 +248,8 @@ module mips(
         .stallF(stallF),.flushF(flushF),
         /*-----Fetch output----*/
         .pcF(pc),.pcplus4F(pcplus4F),.instrF1(instrF),
-        .adelF(adelF),.in_delayF(in_delayF),
+        .adelF(adelF),
+        .bad_addrF(bad_addrF),
         /*-----Decode output----*/
         .srcaD(srcaD),.writedataD(writedataD),
         .rsD(rsD),.rtD(rtD),.rdD(rdD),.saD(saD),
@@ -258,12 +273,14 @@ module mips(
         .writeregM1(writeregM1),
         .writecp0M1(writecp0M1),
         .wea(wea),
-        .excepttype(excepttype),.epcM(epcM)
+        .excepttype(excepttype),.epcM(epcM),
+        .adesM(adesM),.adel_final(adelM)
         );
   assign aluout=aluoutM1;
   
   /*-----Hazard Processor-----*/
   hazard_unit hzu(
+        .stall_by_iram(stall_by_iram),
         .regwriteM(regwriteM),.regwriteW(regwriteW),.regwriteE(regwriteE),.hilowriteM(hilowriteM),
         .cp0writeM(cp0writeM),.cp0writeW(cp0writeW),
         .memtoregE(memtoregE),.memtoregM(memtoregM),

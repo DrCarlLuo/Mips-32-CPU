@@ -1,4 +1,5 @@
 module hazard_unit(
+        input stall_by_iram,
         input regwriteM,regwriteW,regwriteE,hilowriteM,
         input cp0writeM,cp0writeW,
         input memtoregE,memtoregM,
@@ -40,15 +41,15 @@ module hazard_unit(
                          (rdE==writecp0W&&cp0writeW)?2'b01:2'b00; 
     
     /*-----Assembly line stalls-----*/                   
-    assign stallF=lwstall||branchstall||jumpstall||stall_divE;
-    assign stallD=lwstall||branchstall||jumpstall||stall_divE;
-    assign stallE=stall_divE;
+    assign stallF=lwstall||branchstall||jumpstall||stall_divE||(stall_by_iram&!flushF);
+    assign stallD=lwstall||branchstall||jumpstall||stall_divE||stall_by_iram;
+    assign stallE=stall_divE||stall_by_iram;
 
     /*-----Assembly line clear-----*/
     assign flushF=except_flush;
     assign flushD=except_flush;
-    assign flushE=except_flush||lwstall||branchstall||jumpstall;
-    assign flushM=except_flush;
+    assign flushE=except_flush||(lwstall&&!stall_by_iram)||branchstall||jumpstall;
+    assign flushM=except_flush||stall_by_iram;
     assign flushW=except_flush;
 
     /*-----Exception pc jump-----*/
